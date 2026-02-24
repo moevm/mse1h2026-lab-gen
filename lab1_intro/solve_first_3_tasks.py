@@ -44,3 +44,8 @@ def sum_divisible(a: List[int], D: int) -> int:
     if D == 0:
         return 0
     return sum(x for x in a if x % D == 0)
+
+
+# Количество элементов, которые по модулю меньше L
+def count_abs_lt(a: List[int], L: int) -> int:
+    return sum(1 for x in a if abs(x) < L)
