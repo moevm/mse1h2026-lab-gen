@@ -3,18 +3,30 @@ import hashlib
 
 from typing import Dict, List
 
+from solve_tasks import first_multiple_index, last_abs_gt_index, count_in_range, sum_abs_step, sum_divisible, \
+    count_abs_lt
+
 # Подзадачи и соответствующие им параметры
 TASKS_INFO = {
-    1: {"name": "ans_first_multiple_index", "params": ["M"]},
-    2: {"name": "ans_last_abs_gt_index", "params": ["T"]},
-    3: {"name": "ans_count_in_range", "params": ["A", "B"]},
-    4: {"name": "ans_sum_abs_step", "params": ["P", "K_step"]},
-    5: {"name": "ans_sum_divisible", "params": ["D"]},
-    6: {"name": "ans_count_abs_lt", "params": ["L"]},
+    1: {"name": "ans_first_multiple_index", "func": first_multiple_index, "params": ["M"]},
+    2: {"name": "ans_last_abs_gt_index", "func": last_abs_gt_index, "params": ["T"]},
+    3: {"name": "ans_count_in_range", "func": count_in_range, "params": ["A", "B"]},
+    4: {"name": "ans_sum_abs_step", "func": sum_abs_step, "params": ["P", "K_step"]},
+    5: {"name": "ans_sum_divisible", "func": sum_divisible, "params": ["D"]},
+    6: {"name": "ans_count_abs_lt", "func": count_abs_lt, "params": ["L"]},
 }
 
 
 class Config:
+    """
+    Класс-конфигурация
+
+    Содержит:
+        params - словарь из параметров вида "имя-числовое значение"
+        sep - разделитель чисел в строке
+        tasks - список выбранных подзадач (K штук)
+    """
+
     def __init__(self) -> None:
         self._params: Dict[str, int] = {}
         self._sep: str = " "
@@ -40,6 +52,19 @@ class Config:
 
 
 def generate_params(seed: str, N_max: int = 100, sep: str = ',', K: int = 3) -> Config:
+    """
+    Генерирует конфигурацию для студента на основе seed.
+    
+    Аргументы:
+        seed: строка-идентификатор студента
+        N_max: максимальный размер массива
+        sep: разделитель чисел
+        K: количество подзадач
+    
+    Возвращает:
+        Config: объект конфигурации с параметрами и задачами
+    """
+
     config = Config()
     config.set_param("N_max", N_max)
     config.set_sep(sep)
