@@ -37,3 +37,10 @@ def sum_abs_step(a: List[int], P: int, K_step: int) -> int:
     for i in range(P, len(a), K_step):
         s += abs(a[i])
     return s
+
+
+# Сумма элементов, делящихся на D
+def sum_divisible(a: List[int], D: int) -> int:
+    if D == 0:
+        return 0
+    return sum(x for x in a if x % D == 0)
