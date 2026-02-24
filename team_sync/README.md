@@ -2,7 +2,7 @@
 
 ## Командные созвоны
 Ниже приведен список протоколов:
-- [Командный созвон №1 ]https://github.com/moevm/mse1h2026-lab-gen/blob/reports/team_sync"`Созвон №1 20.02)."
+- [Командный созвон №1 ](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/team_sync/Созвон%20№1%20(20.02).md)
 - ...
 
 
