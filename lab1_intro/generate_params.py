@@ -3,8 +3,9 @@ import hashlib
 
 from typing import Dict, List
 
-from solve_tasks import first_multiple_index, last_abs_gt_index, count_in_range, sum_abs_step, sum_divisible, \
-    count_abs_lt
+from solve_tasks import first_multiple_index, last_abs_gt_index, \
+                        count_in_range, sum_abs_step, \
+                        sum_divisible, count_abs_lt
 
 # Подзадачи и соответствующие им параметры
 TASKS_INFO = {
@@ -90,13 +91,13 @@ def generate_params(seed: str, N_max: int = 100, sep: str = ',', K: int = 3) -> 
         for param_name in task_info["params"]:
             # Разные параметры имеют разные диапазоны значений
             if param_name in ["M", "D", "L", "T", "P"]:  # Делители, пороги и т.д.
-                params_dict[param_name] = rnd.randint(2, 15)
+                params_dict[param_name] = rnd.randint(2, 12)
             elif param_name == "A":  # Левая граница диапазона
-                params_dict[param_name] = rnd.randint(0, int(N_max*0.25))
+                params_dict[param_name] = rnd.randint(0, int(N_max*0.2))
             elif param_name == "B":  # Правая граница диапазона
-                params_dict[param_name] = rnd.randint(int(N_max*0.75), N_max)
+                params_dict[param_name] = rnd.randint(int(N_max*0.8), N_max)
             elif param_name == "K_step":  # Шаг
-                params_dict[param_name] = rnd.randint(1, 3)
+                params_dict[param_name] = rnd.randint(1, 5)
 
     # Устанавливаем все сгенерированные параметры в конфиг
     for param_name, value in params_dict.items():
