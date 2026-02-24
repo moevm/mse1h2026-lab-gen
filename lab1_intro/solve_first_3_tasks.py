@@ -25,3 +25,15 @@ def count_in_range(a: List[int], A: int, B: int) -> int:
     if A > B:
         return 0
     return sum(1 for x in a if A <= x <= B)
+
+
+# Сумма модулей на позициях с шагом K, начиная с P
+def sum_abs_step(a: List[int], P: int, K_step: int) -> int:
+    if K_step < 1:
+        return 0
+    if P >= len(a):
+        return 0
+    s = 0
+    for i in range(P, len(a), K_step):
+        s += abs(a[i])
+    return s
