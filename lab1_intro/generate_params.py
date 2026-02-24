@@ -26,8 +26,14 @@ class Config:
     def set_param(self, key: str, value: int) -> None:
         self._params[key] = value
 
+    def get_sep(self) -> str:
+        return self._sep
+
     def set_sep(self, value: str) -> None:
         self._sep = value
+
+    def get_tasks(self) -> List[int]:
+        return self._tasks
 
     def set_tasks(self, value: List[int]):
         self._tasks = value
@@ -44,6 +50,8 @@ def generate_params(seed: str, N_max: int = 100, sep: str = ',', K: int = 3) -> 
     seed_hash = int(hashlib.md5(seed.encode()).hexdigest(), 16)
     rnd = random.Random(seed_hash)
 
+    config.set_param("seed_hash", seed_hash)
+
     # Генерируем список подзадач
     all_tasks = list(range(1, 7))
     selected_tasks = rnd.sample(all_tasks, K)
@@ -59,9 +67,9 @@ def generate_params(seed: str, N_max: int = 100, sep: str = ',', K: int = 3) -> 
             if param_name in ["M", "D", "L", "T", "P"]:  # Делители, пороги и т.д.
                 params_dict[param_name] = rnd.randint(2, 15)
             elif param_name == "A":  # Левая граница диапазона
-                params_dict[param_name] = rnd.randint(0, 5)
+                params_dict[param_name] = rnd.randint(0, int(N_max*0.25))
             elif param_name == "B":  # Правая граница диапазона
-                params_dict[param_name] = rnd.randint(15, 20)
+                params_dict[param_name] = rnd.randint(int(N_max*0.75), N_max)
             elif param_name == "K_step":  # Шаг
                 params_dict[param_name] = rnd.randint(1, 3)
 
