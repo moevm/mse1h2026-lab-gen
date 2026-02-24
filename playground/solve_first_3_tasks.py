@@ -17,3 +17,11 @@ def last_abs_gt_index(a: List[int], T: int) -> int:
         if abs(a[i]) > T:
             return i
     return -1
+
+
+# Количество элементов в диапазоне [A; B]
+def count_in_range(a: List[int], A: int, B: int) -> int:
+    # По условию A <= B
+    if A > B:
+        return 0
+    return sum(1 for x in a if A <= x <= B)
