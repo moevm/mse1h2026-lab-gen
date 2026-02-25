@@ -21,7 +21,6 @@ def check_solution(student_file: str, tests: List[Dict[str, Any]]) -> None:
     
     total_tests = 0
     passed = 0
-    pprint(tests)
     
     for task_data in tests:
         task_name = task_data["название первой функции"]
@@ -67,7 +66,15 @@ def check_solution(student_file: str, tests: List[Dict[str, Any]]) -> None:
 if __name__ == "__main__":
     from generate_params import generate_params
     from generate_tests_from_config import generate_tests
-    cfg = generate_params(seed="student123", N_max=15, sep=",", K=3)
+    print("Введите ФИО студента")
+    str = input()
+    cfg = generate_params(seed=str, N_max=15, sep=",", K=3)
     tests = generate_tests(cfg, tests_per_task=5)
-
-    check_solution("solution.py", tests)
+    print("Ваш вариант и тесты к ним")
+    pprint(tests)
+    print("В текущей директории находится файл решения solution.py. Если да, введите Y")
+    confirm = input()
+    if confirm != 'Y':
+        print("Не введено подтверждение")
+    else:
+        check_solution("solution.py", tests)
