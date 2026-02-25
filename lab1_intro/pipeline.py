@@ -6,6 +6,14 @@ from pprint import pprint
 
 
 def check_solution(student_file: str, tests: List[Dict[str, Any]]) -> None:
+    """
+    Проверяет студенческое решение и выводит результат.
+    
+    Аргументы:
+        student_file: путь к .py файлу студента
+        tests: тестовые данные из generate_tests
+    """
+    # Загружаем модуль студента
     spec = importlib.util.spec_from_file_location("student_module", student_file)
     module = importlib.util.module_from_spec(spec)
     sys.modules["student_module"] = module
@@ -19,6 +27,7 @@ def check_solution(student_file: str, tests: List[Dict[str, Any]]) -> None:
         task_name = task_data["название первой функции"]
         task_params = task_data["значение параметра функции"]
         
+        # Получаем функцию студента
         if not hasattr(module, task_name):
             print(f"Функция {task_name} не найдена!")
             continue
@@ -31,9 +40,12 @@ def check_solution(student_file: str, tests: List[Dict[str, Any]]) -> None:
             arr = test["значение теста"]
             expected = test["ожидаемое значение"]
             
+            # Вызываем функцию студента
             if isinstance(task_params, dict):
+                # Для задач с несколькими параметрами
                 result = student_func(arr, *task_params.values())
             else:
+                # Для задач с одним параметром
                 result = student_func(arr, task_params)
             
             total_tests += 1
