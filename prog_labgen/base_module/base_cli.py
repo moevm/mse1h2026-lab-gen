@@ -11,7 +11,7 @@ class CLIParser:
 
 def add_common_cli_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--student", type=str, required=True)
-    parser.add_argument("--solution", type=str)
+    parser.add_argument("--solution", type=str, default="solution.c")
     parser.add_argument(
         "--mode",
         type=str,
