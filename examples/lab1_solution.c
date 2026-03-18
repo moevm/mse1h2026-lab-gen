@@ -8,7 +8,7 @@ static int read_array(int arr[], int max_size) {
     while (size < max_size && scanf("%d", &arr[size]) == 1) {
         size++;
         int ch = getchar();
-        if (ch == '\n') {
+        if (ch == '\n' || ch == EOF) {
             break;
         }
         if (ch != ' ') {
