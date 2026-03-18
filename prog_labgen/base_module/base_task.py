@@ -42,10 +42,6 @@ class BaseTask(ABC):
             indent=2,
         )
 
-    @staticmethod
-    def normalize_output(output: str) -> str:
-        return output.replace("\r\n", "\n").strip()
-
     def compile_c_solution(
         self,
         solution_path: str,
