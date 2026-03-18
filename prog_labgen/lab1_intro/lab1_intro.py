@@ -184,8 +184,8 @@ class Lab1Task(BaseTask):
                         break
                     continue
 
-                expected = self.normalize_output(test_case["expected_stdout"])
-                actual = self.normalize_output(obtained or "")
+                expected = test_case["expected_stdout"]
+                actual = obtained or ""
 
                 if actual == expected:
                     passed_tests += 1
