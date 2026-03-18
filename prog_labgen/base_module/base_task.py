@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import random
+import shutil
 import subprocess
 import tempfile
 from abc import ABC, abstractmethod
@@ -70,9 +71,11 @@ class BaseTask(ABC):
                 check=False,
             )
         except FileNotFoundError:
+            shutil.rmtree(build_dir, ignore_errors=True)
             return None, f"Compiler '{self.compiler}' not found in PATH."
 
         if result.returncode != 0:
+            shutil.rmtree(build_dir, ignore_errors=True)
             error_text = result.stdout.strip() or "Compiler exited with a non-zero code without diagnostics."
             return None, error_text
 
