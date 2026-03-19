@@ -32,7 +32,7 @@ static int ans_first_multiple_index(const int arr[], int size, int m) {
 }
 
 static int ans_last_abs_gt_index(const int arr[], int size, int t) {
-    for (int i = size; i >= 0; --i) {
+    for (int i = size - 1; i >= 0; --i) {
         int value = arr[i] < 0 ? -arr[i] : arr[i];
         if (value > t) {
             return i;
