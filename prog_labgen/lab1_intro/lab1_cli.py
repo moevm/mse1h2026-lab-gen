@@ -20,7 +20,7 @@ def add_lab1_cli_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--n-max", type=int, default=100)
     parser.add_argument("--sep", type=str, default=" ")
     parser.add_argument("--k", type=int, default=3)
-    parser.add_argument("--tests-per-task", type=str, default=5)
+    parser.add_argument("--tests-per-task", type=int, default=5)
     parser.set_defaults(func=create_lab1_task)
 
 
