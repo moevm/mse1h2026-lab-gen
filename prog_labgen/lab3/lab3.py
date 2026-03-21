@@ -147,6 +147,32 @@ class Lab3Task(BaseTask):
         )
         return self._variant
 
+    def render_assignment(self) -> str:
+        variant = self._build_variant()
+        lines = [
+            "Концепция варианта ЛР3",
+            f"Студент: {variant.student}",
+            f"Seed hash: {variant.seed_hash}",
+            f"TextMax: {variant.limits.text_max}",
+            f"SentenceMax: {variant.limits.sentence_max}",
+            f"WordMax: {variant.limits.word_max}",
+            "Программа должна читать текст из stdin до маркера ###, выделять предложения, обрабатывать их и печатать результат.",
+            "Предложения заканчиваются одним из символов: . ; ? !",
+            "Общие требования:",
+            "- пробелы и табуляции в начале предложения удаляются;",
+            "- маркер ### не входит в обработку;",
+            "- каждое предложение результата выводится с новой строки;",
+            "- порядок выбранных предложений не меняется;",
+            "- если после обработки не осталось ни одного предложения, вывести EMPTY;",
+            "- после всех предложений вывести строку Key words: ...;",
+            "- если предложений не осталось, вывести Key words: EMPTY.",
+            "Правила варианта:",
+            f"1. select_rule: {_describe_select_rule(variant.select_rule)}",
+            f"2. rewrite_rule: {_describe_rewrite_rule(variant.rewrite_rule)}",
+            f"3. keyword_rule: {_describe_keyword_rule(variant.keyword_rule)}",
+        ]
+        return "\n".join(lines)
+
 
 def _generate_select_rule(kind: SelectRuleKind, rng: Any, limits: Limits) -> SelectRule:
     if kind is SelectRuleKind.WORD_COUNT:
@@ -187,3 +213,39 @@ def _generate_keyword_rule(kind: KeywordRuleKind, rng: Any) -> KeywordRule:
     if kind is KeywordRuleKind.BY_POSITION:
         return KeywordRule(kind=kind, position=rng.randint(1, 5))
     return KeywordRule(kind=kind)
+
+
+def _describe_select_rule(rule: SelectRule) -> str:
+    if rule.kind is SelectRuleKind.WORD_COUNT:
+        return f"выбрать предложение, если число слов {rule.comparison} {rule.threshold}."
+    if rule.kind is SelectRuleKind.ENDING_PUNCT:
+        endings_text = ", ".join(repr(symbol) for symbol in (rule.endings or ()))
+        return f"выбрать предложение, только если оно оканчивается одним из символов: {endings_text}."
+    if rule.kind is SelectRuleKind.WORD_LENGTH:
+        return f"выбрать предложение, только если в нём есть слово длины не меньше {rule.threshold}."
+    if rule.kind is SelectRuleKind.DIGIT_COUNT:
+        return f"выбрать предложение, только если общее число цифр в предложении не меньше {rule.threshold}."
+    return f"выбрать только предложения с {'чётными' if rule.position_type == 'even' else 'нечётными'} номерами."
+
+
+def _describe_rewrite_rule(rule: RewriteRule) -> str:
+    if rule.kind is RewriteRuleKind.REVERSE_WORDS:
+        return "развернуть порядок слов, сохранив завершающий знак предложения."
+    if rule.kind is RewriteRuleKind.CYCLIC_SHIFT:
+        direction = "влево" if rule.direction == "left" else "вправо"
+        return f"циклически сдвинуть слова {direction} на {rule.shift} позиций."
+    if rule.kind is RewriteRuleKind.SWAP_FIRST_LAST:
+        return "если в предложении не меньше двух слов, поменять местами первое и последнее слово."
+    if rule.kind is RewriteRuleKind.REMOVE_BY_POSITION:
+        return f"удалить слова с {'чётными' if rule.position_type == 'even' else 'нечётными'} номерами; если слов не осталось, предложение не выводить."
+    return "продублировать первое слово в конец предложения перед знаком препинания."
+
+
+def _describe_keyword_rule(rule: KeywordRule) -> str:
+    if rule.kind is KeywordRuleKind.FIRST_LONGEST:
+        return "выбрать самое длинное слово."
+    if rule.kind is KeywordRuleKind.LAST_SHORTEST:
+        return "выбрать последнее самое короткое слово."
+    if rule.kind is KeywordRuleKind.MAX_VOWELS:
+        return "выбрать слово с наибольшим числом гласных; при равенстве взять первое."
+    return f"выбрать слово с номером {rule.position}, а если его нет, то последнее слово предложения."
