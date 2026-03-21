@@ -2,12 +2,25 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any
+from typing import Any, Iterable
 
 from prog_labgen.base_module import BaseTask
 
 DEFAULT_SENTENCE_ENDINGS = ".;?!"
 DEFAULT_VOWELS = set("aeiouyAEIOUY")
+FIXED_TEST_INPUTS: tuple[str, ...] = (
+    "Small fox runs. Brilliant minds grow fast! Tiny digits stay? Northern mountains shimmer brightly. ###",
+    "  One two three.\t\t444 mark here! Empty 1? ### trailing text is ignored.",
+    "Alpha beta gamma delta; Seven 77 seas? lone! ###",
+    "\t\tSingle. Double word! 12345 digits and numbers 7? ###",
+    "Keep calm and code. Remove every second word maybe! Echo echo echo? ###",
+)
+WORD_POOL: tuple[str, ...] = (
+    "alpha", "beta", "gamma", "delta", "omega", "vector", "matrix", "cipher",
+    "orbit", "signal", "planet", "rocket", "forest", "river", "silver", "bright",
+    "northern", "violet", "quantum", "whisper", "crystal", "autumn", "python", "kernel",
+)
+DIGIT_WORD_POOL: tuple[str, ...] = ("x1", "m2", "n33", "p444", "z5555", "a7b8")
 
 
 @dataclass(frozen=True)
@@ -173,6 +186,33 @@ class Lab3Task(BaseTask):
         ]
         return "\n".join(lines)
 
+    def generate_tests(self) -> list[dict[str, Any]]:
+        variant = self._build_variant()
+        tests: list[dict[str, Any]] = []
+        for index, input_text in enumerate(FIXED_TEST_INPUTS[: self.tests_count], start=1):
+            tests.append(
+                {
+                    "input_text": input_text,
+                    "stdin": input_text,
+                    "expected_stdout": solve_text(input_text, variant).render_output() + "\n",
+                    "test_id": f"fixed_{index}",
+                }
+            )
+        rng = self.make_random()
+        while len(tests) < self.tests_count:
+            input_text = generate_random_input(rng, self.limits)
+            test_index = len(tests) - len(FIXED_TEST_INPUTS) + 1
+            tests.append(
+                {
+                    "input_text": input_text,
+                    "stdin": input_text,
+                    "expected_stdout": solve_text(input_text, variant).render_output() + "\n",
+                    "test_id": f"random_{test_index}",
+                }
+            )
+
+        return tests
+
 
 def _generate_select_rule(kind: SelectRuleKind, rng: Any, limits: Limits) -> SelectRule:
     if kind is SelectRuleKind.WORD_COUNT:
@@ -249,3 +289,168 @@ def _describe_keyword_rule(rule: KeywordRule) -> str:
     if rule.kind is KeywordRuleKind.MAX_VOWELS:
         return "выбрать слово с наибольшим числом гласных; при равенстве взять первое."
     return f"выбрать слово с номером {rule.position}, а если его нет, то последнее слово предложения."
+
+
+def cut_text_to_marker(text: str, marker: str) -> str:
+    index = text.find(marker)
+    return text[:index] if index > 0 else text
+
+
+def split_sentences(text: str, limits: Limits) -> list[Sentence]:
+    prepared_text = cut_text_to_marker(text, limits.text_end_marker)
+    if len(prepared_text) > limits.text_max:
+        prepared_text = prepared_text[: limits.text_max]
+
+    sentences: list[Sentence] = []
+    start = 0
+    for index, symbol in enumerate(prepared_text):
+        if symbol not in limits.sentence_endings:
+            continue
+        raw = prepared_text[start: index + 1]
+        start = index + 1
+        normalized = raw.lstrip(" \t")
+        if not normalized:
+            continue
+        content = normalized[:-1]
+        sentences.append(
+            Sentence(
+                index=len(sentences) + 1,
+                raw=raw,
+                normalized=normalized,
+                ending=normalized[-1],
+                words=tuple(content.split()),
+            )
+        )
+        if len(sentences) >= limits.sentence_max:
+            break
+    return sentences
+
+
+def count_digits(sentence: Sentence) -> int:
+    return sum(symbol.isdigit() for symbol in sentence.normalized)
+
+
+def apply_select_rule(sentence: Sentence, rule: SelectRule) -> bool:
+    if rule.kind is SelectRuleKind.WORD_COUNT:
+        return COMPARISONS[str(rule.comparison)](len(sentence.words), int(rule.threshold))
+    if rule.kind is SelectRuleKind.ENDING_PUNCT:
+        return sentence.ending in set(rule.endings or ())
+    if rule.kind is SelectRuleKind.WORD_LENGTH:
+        return any(len(word) >= int(rule.threshold or 0) for word in sentence.words)
+    if rule.kind is SelectRuleKind.DIGIT_COUNT:
+        return count_digits(sentence) >= int(rule.threshold or 0)
+    return sentence.index % 2 == (0 if rule.position_type == "even" else 1)
+
+
+def cyclic_shift(words: list[str], shift: int, direction: str) -> list[str]:
+    if not words:
+        return []
+    step = shift % len(words)
+    if step == 0:
+        return words[:]
+    if direction == "left":
+        return words[step:] + words[:step]
+    return words[-step:] + words[:-step]
+
+
+def apply_rewrite_rule(sentence: Sentence, rule: RewriteRule) -> list[str]:
+    words = list(sentence.words)
+    if rule.kind is RewriteRuleKind.REVERSE_WORDS:
+        return list(reversed(words))
+    if rule.kind is RewriteRuleKind.CYCLIC_SHIFT:
+        return cyclic_shift(words, int(rule.shift or 0), str(rule.direction or "left"))
+    if rule.kind is RewriteRuleKind.SWAP_FIRST_LAST:
+        if len(words) >= 2:
+            words[0], words[-1] = words[-1], words[0]
+        return words
+    if rule.kind is RewriteRuleKind.REMOVE_BY_POSITION:
+        kept_words: list[str] = []
+        remove_even = rule.position_type == "even"
+        for index, word in enumerate(words, start=1):
+            if remove_even and index % 2 == 1:
+                kept_words.append(word)
+            if not remove_even and index % 2 == 0:
+                kept_words.append(word)
+        return kept_words
+    if words:
+        words.append(words[0])
+    return words
+
+
+def count_vowels(word: str) -> int:
+    return sum(symbol in DEFAULT_VOWELS for symbol in word)
+
+
+def choose_keyword(words: list[str], rule: KeywordRule) -> str:
+    if not words:
+        raise ValueError("Cannot choose keyword from empty sentence")
+
+    if rule.kind is KeywordRuleKind.FIRST_LONGEST:
+        max_length = max(len(word) for word in words)
+        for word in words:
+            if len(word) == max_length:
+                return word
+
+    if rule.kind is KeywordRuleKind.LAST_SHORTEST:
+        min_length = min(len(word) for word in words)
+        for word in reversed(words):
+            if len(word) == min_length:
+                return word
+
+    if rule.kind is KeywordRuleKind.MAX_VOWELS:
+        max_count = max(count_vowels(word) for word in words)
+        for word in words:
+            if count_vowels(word) == max_count:
+                return word
+
+    if rule.kind is KeywordRuleKind.BY_POSITION:
+        position = int(rule.position or 1)
+        return words[position - 1] if position <= len(words) else words[-1]
+
+    raise ValueError(f"Unsupported keyword rule kind: {rule.kind}")
+
+
+def render_sentence(words: Iterable[str], ending: str) -> str:
+    prepared_words = list(words)
+    return f"{' '.join(prepared_words)}{ending}" if prepared_words else ""
+
+
+def solve_text(text: str, variant: Variant) -> SolveResult:
+    transformed_sentences: list[str] = []
+    keywords: list[str] = []
+
+    for sentence in split_sentences(text, variant.limits):
+        if not apply_select_rule(sentence, variant.select_rule):
+            continue
+        transformed_words = apply_rewrite_rule(sentence, variant.rewrite_rule)
+        if not transformed_words:
+            continue
+        transformed_sentences.append(render_sentence(transformed_words, sentence.ending))
+        keywords.append(choose_keyword(transformed_words, variant.keyword_rule))
+
+    return SolveResult(transformed_sentences=transformed_sentences, keywords=keywords)
+
+
+def normalize_output(text: str) -> str:
+    lines = [line.rstrip() for line in text.replace("\r\n", "\n").replace("\r", "\n").split("\n")]
+    while lines and lines[-1] == "":
+        lines.pop()
+    return "\n".join(lines)
+
+
+def generate_random_input(rng: Any, limits: Limits) -> str:
+    sentence_count = rng.randint(3, 7)
+    sentences: list[str] = []
+
+    for _ in range(sentence_count):
+        word_count = rng.randint(1, 7)
+        words: list[str] = []
+        for _ in range(word_count):
+            source = DIGIT_WORD_POOL if rng.random() < 0.25 else WORD_POOL
+            word = rng.choice(source)
+            words.append(word[: limits.word_max])
+        prefix = rng.choice(("", " ", "\t", " \t"))
+        ending = rng.choice(tuple(limits.sentence_endings))
+        sentences.append(prefix + " ".join(words) + ending)
+
+    return " ".join(sentences) + " ###"
