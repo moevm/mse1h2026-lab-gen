@@ -25,6 +25,6 @@ def add_lab3_cli_args(parser: argparse.ArgumentParser) -> None:
 
 
 Lab3CLIParser = CLIParser(
-    name="lab3_intro",
+    name="lab3",
     add_cli_args=add_lab3_cli_args,
 )

@@ -29,7 +29,7 @@ class Limits:
     text_max: int = 10000
     sentence_max: int = 200
     word_max: int = 64
-    sentence_endings = DEFAULT_SENTENCE_ENDINGS
+    sentence_endings: str = DEFAULT_SENTENCE_ENDINGS
     text_end_marker: str = "###"
 
 
@@ -139,7 +139,7 @@ class Lab3Task(BaseTask):
             sentence_max=sentence_max,
             word_max=word_max,
         )
-        self.test_count = max(1, tests_count)
+        self.tests_count = max(1, tests_count)
         self._variant: Variant | None = None
 
     def _build_variant(self) -> Variant:
