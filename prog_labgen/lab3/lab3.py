@@ -351,7 +351,7 @@ def _describe_keyword_rule(rule: KeywordRule) -> str:
 
 def cut_text_to_marker(text: str, marker: str) -> str:
     index = text.find(marker)
-    return text[:index] if index > 0 else text
+    return text[:index] if index >= 0 else text
 
 
 def split_sentences(text: str, limits: Limits) -> list[Sentence]:
