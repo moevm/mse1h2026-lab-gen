@@ -341,7 +341,7 @@ def _describe_rewrite_rule(rule: RewriteRule) -> str:
 
 def _describe_keyword_rule(rule: KeywordRule) -> str:
     if rule.kind is KeywordRuleKind.FIRST_LONGEST:
-        return "выбрать самое длинное слово."
+        return "выбрать первое самое длинное слово."
     if rule.kind is KeywordRuleKind.LAST_SHORTEST:
         return "выбрать последнее самое короткое слово."
     if rule.kind is KeywordRuleKind.MAX_VOWELS:
