@@ -61,3 +61,58 @@ class RewriteRule:
 class KeywordRule:
     kind: KeywordRuleKind
     position: int | None = None
+
+
+@dataclass(frozen=True)
+class Variant:
+    student: str
+    seed_hash: int
+    select_rule: SelectRule
+    rewrite_rule: RewriteRule
+    keyword_rule: KeywordRule
+    limits: Limits
+
+
+@dataclass(frozen=True)
+class Sentence:
+    index: int
+    raw: str
+    normalized: str
+    ending: str
+    words: tuple[str, ...]
+
+
+# Сериализация результата задачи в строку вывода
+@dataclass(frozen=True)
+class SolveResult:
+    transformed_sentences: list[str]
+    keywords: list[str]
+
+    def render_output(self) -> str:
+        if not self.transformed_sentences:
+            return "EMPTY\nKey words: EMPTY"
+        return "\n".join([
+            *self.transformed_sentences,
+            f"Key words: {' '.join(self.keywords)}",
+        ])
+
+
+class Lab3Task(BaseTask):
+    def __init__(
+            self,
+            student: str,
+            text_max: int = 10000,
+            sentence_max: int = 200,
+            word_max: int = 64,
+            tests_count: int = 10,
+            fail_on_first_test: bool = True,
+            compiler: str | None = None
+    ) -> None:
+        super().__init__(student=student, fail_on_first_test=fail_on_first_test, compiler=compiler)
+        self.limits = Limits(
+            text_max=text_max,
+            sentence_max=sentence_max,
+            word_max=word_max,
+        )
+        self.test_count = max(1, tests_count)
+        self._variant: Variant | None = None
