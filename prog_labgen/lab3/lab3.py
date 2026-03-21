@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Iterable
@@ -212,6 +213,63 @@ class Lab3Task(BaseTask):
             )
 
         return tests
+
+    def check(self, solution_path: str) -> tuple[bool, str]:
+        binary_path, compile_error = self.compile_c_solution(
+            solution_path,
+            output_name="lab3_solution",
+        )
+        if compile_error is not None or binary_path is None:
+            return False, f"Ошибка компиляции решения:\n{compile_error}"
+
+        total_tests = 0
+        passed_tests = 0
+        messages: list[str] = []
+
+        try:
+            for index, test_case in enumerate(self.generate_tests(), start=1):
+                total_tests += 1
+                obtained, runtime_error = self.run_binary(binary_path, test_case["stdin"])
+
+                if runtime_error is not None:
+                    messages.append(
+                        f"Тест {index}: FAIL\n"
+                        f"Вход:\n{test_case['input_text']}\n"
+                        f"Ошибка выполнения:\n{runtime_error}"
+                    )
+                    if self.fail_on_first_test:
+                        break
+                    continue
+
+                expected = normalize_output(test_case["expected_stdout"])
+                actual = normalize_output(obtained or "")
+
+                if actual == expected:
+                    passed_tests += 1
+                    messages.append(f"Тест {index}: OK")
+                    continue
+
+                messages.append(
+                    f"Тест {index}: FAIL\n"
+                    f"Вход:\n{test_case['input_text']}\n"
+                    f"Ожидалось:\n{expected}\n"
+                    f"Получено:\n{actual}"
+                )
+                if self.fail_on_first_test:
+                    break
+        finally:
+            if binary_path.exists():
+                binary_path.unlink()
+            try:
+                binary_path.parent.rmdir()
+            except OSError:
+                pass
+            shutil.rmtree(binary_path.parent, ignore_errors=True)
+
+        summary = f"Итог: {passed_tests}/{total_tests} тестов пройдено"
+        all_passed = passed_tests == total_tests
+        footer = "Все тесты пройдены" if all_passed else "Есть ошибки"
+        return all_passed, "\n".join(messages + [summary, footer])
 
 
 def _generate_select_rule(kind: SelectRuleKind, rng: Any, limits: Limits) -> SelectRule:
