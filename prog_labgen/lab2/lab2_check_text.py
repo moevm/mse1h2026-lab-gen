@@ -6,6 +6,8 @@ from pathlib import Path
 from prog_labgen.lab2.lab2 import Lab2Task
 from prog_labgen.lab2.lab2_parser import parse_student_solution_blob, write_solution_to_dir
 
+import warnings
+warnings.filterwarnings("ignore", category=RuntimeWarning, module="runpy")
 
 def check_from_text_blob(
     blob_text: str,

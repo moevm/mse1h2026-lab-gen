@@ -3,6 +3,8 @@ from prog_labgen.base_module import CLIParser, add_common_cli_args, get_common_c
 
 from prog_labgen.lab2.lab2 import Lab2Task
 
+import warnings
+warnings.filterwarnings("ignore", category=RuntimeWarning, module="runpy")
 
 def create_lab2_task(args: argparse.Namespace) -> Lab2Task:
     return Lab2Task(
