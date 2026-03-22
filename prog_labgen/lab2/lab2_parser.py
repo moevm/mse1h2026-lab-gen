@@ -22,7 +22,6 @@ def parse_student_solution_blob(text: str) -> List[Tuple[str, str]]:
         if line.startswith("### "):
             if current_name is not None:
                 result.append((current_name, "\n".join(current_lines)))
-
             current_name = line[4:].strip()
             current_lines = []
             continue

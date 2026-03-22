@@ -1,6 +1,7 @@
 import argparse
+import shutil
+import sys
 from pathlib import Path
-import tempfile
 
 from prog_labgen.lab2.lab2 import Lab2Task
 from prog_labgen.lab2.lab2_parser import parse_student_solution_blob, write_solution_to_dir
@@ -12,14 +13,15 @@ def check_from_text_blob(
     K: int = 3,
     student: str = "ab12",
     fail_on_first_test: bool = True,
+    keep_temp: bool = False,
 ) -> None:
-    #print("DEBUG: BLOB TEXT length =", len(blob_text))
     entries = parse_student_solution_blob(blob_text)
-    #print("DEBUG: ENTRIES (len, name, len(content)):")
-    #for name, content in entries:
-    #    print(f"  {name}: {len(content)} chars")
 
-    debug_dir = Path("/home/chesluchilos/mse1h2026-lab-gen/debug_student_solution") #debug only
+    debug_dir = Path("/home/chesluchilos/mse1h2026-lab-gen/debug_student_solution")
+    
+    if debug_dir.exists() and not keep_temp:
+        shutil.rmtree(debug_dir)
+    
     debug_dir.mkdir(exist_ok=True, parents=True)
 
     write_solution_to_dir(entries, debug_dir)
@@ -34,6 +36,9 @@ def check_from_text_blob(
     ok, msg = task.check(solution_path=debug_dir)
     print("OK" if ok else "FAIL")
     print(msg)
+    
+    if not keep_temp and debug_dir.exists():
+        shutil.rmtree(debug_dir)
 
 
 if __name__ == "__main__":
@@ -46,6 +51,7 @@ if __name__ == "__main__":
     parser.add_argument("--K", type=int, default=3, help="Количество core‑функций.")
     parser.add_argument("--student", default="ab12", help="Имя студента для генерации варианта.")
     parser.add_argument("--all-tests", action="store_true", help="Не останавливаться на первой ошибке.")
+    parser.add_argument("--keep-temp", action="store_true", help="Оставить временные файлы для отладки.")
 
     args = parser.parse_args()
 
@@ -57,4 +63,5 @@ if __name__ == "__main__":
         K=args.K,
         student=args.student,
         fail_on_first_test=not args.all_tests,
+        keep_temp=args.keep_temp,
     )
