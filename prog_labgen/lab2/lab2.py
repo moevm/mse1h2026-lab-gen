@@ -25,6 +25,7 @@ class Variant:
     seed_hash: int
     Nmax: int
     K: int
+    sep: str
     core_functions: List[Dict[str, Any]]
     main_stub: str
     test_size: int
@@ -69,11 +70,13 @@ class Lab2Task(BaseTask):
         student: str,
         Nmax: int = 100,
         K: int = 3,
+        sep: str = " ",
         **kwargs,
     ) -> None:
         super().__init__(student=student, **kwargs)
         self.Nmax = Nmax
         self.K = K
+        self.sep = sep
         self._variant: Variant | None = None
 
 
@@ -95,6 +98,7 @@ class Lab2Task(BaseTask):
             seed_hash=self.make_seed_hash("lab2"),
             Nmax=self.Nmax,
             K=self.K,
+            sep=self.sep,
             core_functions=core_data,
             main_stub=self.student,
             test_size=test_size,
@@ -105,13 +109,14 @@ class Lab2Task(BaseTask):
     def render_assignment(self) -> str:
         v = self._build_variant()
         lines = [
-            "Вариант 2‑й лабораторной",
+            "Концепция варианта 2‑й лабораторной",
             f"Студент: {v.student}",
             f"Seed hash: {v.seed_hash}",
             f"Nmax: {v.Nmax}",
             f"K: {v.K}",
+            f"SEP: '{v.sep}'",
             "Напишите многофайловый проект на языке С, выделив каждую подзадачу в отдельный модуль.",
-            "На вход подаётся массив целых чисел. Размер массива не больше Nmax, числа разделены пробелами, строка заканчивается символом перевода строки.",
+            f"На вход подаётся массив целых чисел. Размер массива не больше Nmax, числа разделены разделителем '{v.sep}', строка заканчивается символом перевода строки.",
             "Программа должна последовательно вычислить все K подзадач и вывести результаты в заданном порядке, каждый результат с новой строки.",
             "Для каждой подзадачи должны быть созданы: отдельный .c файл и отдельный .h файл.",
             "Главный файл должен подключать все необходимые заголовочные файлы и вызывать все назначенные функции.",
@@ -122,6 +127,12 @@ class Lab2Task(BaseTask):
             params = " ".join(f"{k}={v}" for k, v in core['params'].items()) if core['params'] else "(без параметров)"
             lines.append(f"  - {core['name']} (модуль: {core['module']}, параметры: {params})")
         return "\n".join(lines)
+
+
+    def _format_array(self, arr: List[int]) -> str:
+        if not arr:
+            return ""
+        return self.sep.join(map(str, arr))
 
 
     def _simulate_step(self, arr: List[int], core: Dict[str, Any]) -> Tuple[List[str], List[int]]:
@@ -138,20 +149,20 @@ class Lab2Task(BaseTask):
                 result = arr[:]
                 result[A:B+1] = result[A:B+1][::-1]
                 arr = result
-            outputs.append(" ".join(map(str, arr)) if arr else "")
+            outputs.append(self._format_array(arr))
 
         elif name == "shift_left":
             T = params.get("T", 1)
             if len(arr) > 0:
                 T = T % len(arr)
                 arr = arr[T:] + arr[:T]
-            outputs.append(" ".join(map(str, arr)) if arr else "")
+            outputs.append(self._format_array(arr))
 
         elif name == "even_odd_reorder":
             even = [x for x in arr if x % 2 == 0]
             odd = [x for x in arr if x % 2 != 0]
             arr = even + odd
-            outputs.append(" ".join(map(str, arr)) if arr else "")
+            outputs.append(self._format_array(arr))
 
         elif name == "palindrome_check" or name == "is_palindrome":
             if len(arr) <= 1:
@@ -177,7 +188,7 @@ class Lab2Task(BaseTask):
                 else:
                     new_arr.append(arr[i])
             arr = new_arr
-            outputs.append(" ".join(map(str, arr)) if arr else "")
+            outputs.append(self._format_array(arr))
 
         return outputs, arr
 
@@ -208,7 +219,7 @@ class Lab2Task(BaseTask):
 
             tests.append({
                 "id": f"fixed_{idx}",
-                "stdin": " ".join(map(str, inp)) + "\n",
+                "stdin": self.sep.join(map(str, inp)) + "\n",
                 "expected_stdout": expected,
             })
 
@@ -227,7 +238,7 @@ class Lab2Task(BaseTask):
 
             tests.append({
                 "id": f"random_{len(tests)}",
-                "stdin": " ".join(map(str, inp)) + "\n",
+                "stdin": self.sep.join(map(str, inp)) + "\n",
                 "expected_stdout": expected,
             })
 

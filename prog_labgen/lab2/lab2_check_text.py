@@ -9,10 +9,12 @@ from prog_labgen.lab2.lab2_parser import parse_student_solution_blob, write_solu
 import warnings
 warnings.filterwarnings("ignore", category=RuntimeWarning, module="runpy")
 
+
 def check_from_text_blob(
     blob_text: str,
     Nmax: int = 100,
     K: int = 3,
+    sep: str = " ",
     student: str = "ab12",
     fail_on_first_test: bool = True,
     keep_temp: bool = False,
@@ -32,6 +34,7 @@ def check_from_text_blob(
         student=student,
         Nmax=Nmax,
         K=K,
+        sep=sep,
         fail_on_first_test=fail_on_first_test,
     )
 
@@ -51,6 +54,7 @@ if __name__ == "__main__":
     parser.add_argument("--blob-file", required=True, help="Файл с текст‑полотном студента.")
     parser.add_argument("--Nmax", type=int, default=100, help="Максимальный размер массива.")
     parser.add_argument("--K", type=int, default=3, help="Количество core‑функций.")
+    parser.add_argument("--sep", type=str, default=" ", help="Разделитель чисел во вводе/выводе.")
     parser.add_argument("--student", default="ab12", help="Имя студента для генерации варианта.")
     parser.add_argument("--all-tests", action="store_true", help="Не останавливаться на первой ошибке.")
     parser.add_argument("--keep-temp", action="store_true", help="Оставить временные файлы для отладки.")
@@ -63,6 +67,7 @@ if __name__ == "__main__":
         blob_text=blob,
         Nmax=args.Nmax,
         K=args.K,
+        sep=args.sep,
         student=args.student,
         fail_on_first_test=not args.all_tests,
         keep_temp=args.keep_temp,

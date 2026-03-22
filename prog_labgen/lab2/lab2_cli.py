@@ -6,10 +6,12 @@ from prog_labgen.lab2.lab2 import Lab2Task
 import warnings
 warnings.filterwarnings("ignore", category=RuntimeWarning, module="runpy")
 
+
 def create_lab2_task(args: argparse.Namespace) -> Lab2Task:
     return Lab2Task(
         Nmax=args.Nmax,
         K=args.K,
+        sep=args.sep,
         **get_common_cli_args(args),
     )
 
@@ -18,6 +20,7 @@ def add_lab2_cli_args(parser: argparse.ArgumentParser) -> None:
     add_common_cli_args(parser)
     parser.add_argument("--Nmax", type=int, default=100, help="Максимальный размер массива")
     parser.add_argument("--K", type=int, default=3, help="Количество core‑функций")
+    parser.add_argument("--sep", type=str, default=" ", help="Разделитель чисел во вводе/выводе")
     parser.set_defaults(func=create_lab2_task)
 
 
