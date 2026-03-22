@@ -18,6 +18,77 @@ CORE_FUNCTIONS = [
     "even_odd_reorder",
 ]
 
+FUNCTION_DESCRIPTIONS = {
+    "is_palindrome": {
+        "description": "Проверить, является ли массив палиндромом",
+        "output": "YES / NO",
+        "example": "1 2 3 2 1 -> YES, 1 2 3 -> NO"
+    },
+    "palindrome_check": {
+        "description": "Проверить, является ли массив палиндромом",
+        "output": "YES / NO",
+        "example": "1 2 3 2 1 -> YES, 1 2 3 -> NO"
+    },
+    "interleave_ends": {
+        "description": "Вывести элементы, чередуя начало и конец массива",
+        "output": "массив",
+        "example": "1 2 3 4 5 6 -> 1 6 2 5 3 4"
+    },
+    "reverse_segment": {
+        "description": "Развернуть подмассив с индексами от A до B",
+        "output": "массив",
+        "example": "A=2, B=4: 1 2 3 4 5 -> 1 2 5 4 3"
+    },
+    "shift_left": {
+        "description": "Циклически сдвинуть массив влево на T позиций",
+        "output": "массив",
+        "example": "T=2: 1 2 3 4 5 -> 3 4 5 1 2"
+    },
+    "swap_pairs": {
+        "description": "Разбить массив на пары и поменять элементы в каждой паре местами",
+        "output": "массив",
+        "example": "1 2 3 4 5 6 -> 2 1 4 3 6 5"
+    },
+    "swappairs": {
+        "description": "Разбить массив на пары и поменять элементы в каждой паре местами",
+        "output": "массив",
+        "example": "1 2 3 4 5 6 -> 2 1 4 3 6 5"
+    },
+    "even_odd_reorder": {
+        "description": "Перенести все чётные элементы в начало, нечётные - в конец",
+        "output": "массив",
+        "example": "1 2 3 4 5 6 -> 2 4 6 1 3 5"
+    },
+}
+
+
+def _get_function_description(core_name: str, params: Dict[str, Any]) -> str:
+    base = FUNCTION_DESCRIPTIONS.get(core_name, {})
+    description = base.get("description", core_name)
+    example = base.get("example", "")
+    
+    if core_name == "reverse_segment":
+        A = params.get("A", 0)
+        B = params.get("B", 0)
+        example_arr = [1, 2, 3, 4, 5, 6, 7, 8]
+        if 0 <= A < len(example_arr) and 0 <= B < len(example_arr) and A <= B:
+            result = example_arr[:A] + example_arr[A:B+1][::-1] + example_arr[B+1:]
+            result_str = " ".join(map(str, result))
+            example = f"A={A}, B={B}: 1 2 3 4 5 6 7 8 -> {result_str}"
+        else:
+            example = f"A={A}, B={B} (применимо только к массивам соответствующего размера)"
+        return f"{description} ({example})"
+    
+    elif core_name == "shift_left":
+        T = params.get("T", 1)
+        example_arr = [1, 2, 3, 4, 5]
+        T_eff = T % len(example_arr)
+        result = example_arr[T_eff:] + example_arr[:T_eff]
+        result_str = " ".join(map(str, result))
+        return f"{description} (T={T}). Пример: 1 2 3 4 5 -> {result_str}"
+    
+    else:
+        return f"{description}. Пример: {example}" 
 
 @dataclass(frozen=True)
 class Variant:
@@ -109,23 +180,42 @@ class Lab2Task(BaseTask):
     def render_assignment(self) -> str:
         v = self._build_variant()
         lines = [
-            "Концепция варианта 2‑й лабораторной",
+            "Вариант 2-й лабораторной",
             f"Студент: {v.student}",
             f"Seed hash: {v.seed_hash}",
             f"Nmax: {v.Nmax}",
             f"K: {v.K}",
             f"SEP: '{v.sep}'",
+            "",
             "Напишите многофайловый проект на языке С, выделив каждую подзадачу в отдельный модуль.",
             f"На вход подаётся массив целых чисел. Размер массива не больше Nmax, числа разделены разделителем '{v.sep}', строка заканчивается символом перевода строки.",
             "Программа должна последовательно вычислить все K подзадач и вывести результаты в заданном порядке, каждый результат с новой строки.",
             "Для каждой подзадачи должны быть созданы: отдельный .c файл и отдельный .h файл.",
             "Главный файл должен подключать все необходимые заголовочные файлы и вызывать все назначенные функции.",
             "Проект должен собираться через Makefile. Ошибкой считается дублирование кода.",
-            "Core‑функции для данного варианта:",
+            "",
+            "=" * 60,
+            "Core-функции для данного варианта:",
+            "=" * 60,
         ]
-        for core in v.core_functions:
-            params = " ".join(f"{k}={v}" for k, v in core['params'].items()) if core['params'] else "(без параметров)"
-            lines.append(f"  - {core['name']} (модуль: {core['module']}, параметры: {params})")
+        
+        for idx, core in enumerate(v.core_functions, start=1):
+            name = core["name"]
+            params = core.get("params", {})
+            
+            desc = _get_function_description(name, params)
+            
+            lines.append(f"\n{idx}. {name}")
+            lines.append(f"   {desc}")
+        
+        lines.append("\n" + "=" * 60)
+        lines.append("Требования к реализации:")
+        lines.append("=" * 60)
+        lines.append("1. Каждая функция должна быть реализована в отдельной паре .c/.h файлов.")
+        lines.append("2. Makefile должен собирать проект в исполняемый файл lab2_solution.")
+        lines.append("3. Запрещено дублирование кода.")
+        lines.append("4. Решение должно быть оформлено в виде текстового блока с разделителями ###filename")
+        
         return "\n".join(lines)
 
 
