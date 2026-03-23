@@ -1,116 +1,142 @@
 import pytest
-from typing import List, Dict
-from .lab2 import Lab2Task, CORE_FUNCTIONS
+
+from .lab2 import Lab2Task
+from .lab2_parser import parse_student_solution_blob
 
 
 def test_render_assignment_is_deterministic():
     t1 = Lab2Task(student="ab12", Nmax=100, K=3)
     t2 = Lab2Task(student="ab12", Nmax=100, K=3)
-    v1 = t1._build_variant()
-    v2 = t2._build_variant()
-    assert v1 == v2, "Одинаковый student = одинаковый вариант"
-
-    text1 = t1.render_assignment()
-    text2 = t2.render_assignment()
-    assert text1 == text2, "Формулировка должна быть одинаковой"
+    assert t1._build_variant() == t2._build_variant()
+    assert t1.render_assignment() == t2.render_assignment()
 
 
-def test_render_assignment_contains_core_functions():
-    t = Lab2Task(student="ab12", Nmax=100, K=3)
-    text = t.render_assignment()
-    v = t._build_variant()
-    for core in v.core_functions:
-        module = core["module"]
-        assert module in text, f"В формулировке нет модуля {module}"
-        assert core["name"] in text, f"В формулировке нет функции {core['name']}"
+def test_render_assignment_contains_required_modules():
+    task = Lab2Task(student="ab12", Nmax=100, K=3)
+    variant = task._build_variant()
+    text = task.render_assignment()
+
+    assert variant.main_file in text
+    assert f"{variant.data_io_module}.h" in text
+    assert f"{variant.core_module}.c" in text
+    assert variant.executable in text
+    for step in variant.steps:
+        assert step.name in text
+        assert step.module in text
+        for call in step.calls:
+            assert call in text
 
 
-@pytest.mark.parametrize(
-    "Nmax, K, expected_core_count",
-    [(10, 2, 2), (100, 10, len(CORE_FUNCTIONS))],
-)
-def test_core_functions_count(Nmax: int, K: int, expected_core_count: int):
-    t = Lab2Task(student="ivanov", Nmax=Nmax, K=K)
-    v = t._build_variant()
-    assert len(v.core_functions) == min(K, len(CORE_FUNCTIONS)), \
-        "K core‑функций, не больше общего пула"
+def test_variant_contains_k_steps():
+    task = Lab2Task(student="ivanov", Nmax=50, K=2)
+    variant = task._build_variant()
+    assert len(variant.steps) == 2
 
 
-def test_generate_tests_basic():
-    t = Lab2Task(student="ab12", Nmax=50, K=2)
-    tests = t.generate_tests()
-    assert isinstance(tests, list), "generate_tests должен возвращать список"
-    assert len(tests) > 0, "Должны быть хотя бы фиксированные тесты"
+def test_generate_tests_basic_shape():
+    task = Lab2Task(student="ab12", Nmax=50, K=2)
+    tests = task.generate_tests()
+    assert isinstance(tests, list)
+    assert len(tests) == 10
     for test in tests:
-        assert "stdin" in test and "expected_stdout" in test, \
-            "Каждый тест должен иметь stdin и expected_stdout"
+        assert "stdin" in test and "expected_stdout" in test
 
 
-def test_generate_tests_deterministic():
-    t1 = Lab2Task(student="ab12", Nmax=50, K=2)
-    tests1 = t1.generate_tests()
-    t2 = Lab2Task(student="ab12", Nmax=50, K=2)
-    tests2 = t2.generate_tests()
-    fixed1 = [t for t in tests1 if t["id"].startswith("fixed_")]
-    fixed2 = [t for t in tests2 if t["id"].startswith("fixed_")]
-    for t1, t2 in zip(fixed1, fixed2):
-        assert t1["stdin"] == t2["stdin"], "Фиксированные входы должны совпадать"
-        assert t1["expected_stdout"] == t2["expected_stdout"], "Ожидаемый вывод должен быть одинаковым"
-
-
-def test_sep_parameter():
-    t1 = Lab2Task(student="ab12", Nmax=50, K=2, sep=" ")
-    t2 = Lab2Task(student="ab12", Nmax=50, K=2, sep=",")
-    
-    tests1 = t1.generate_tests()
-    tests2 = t2.generate_tests()
-    
-    for test1, test2 in zip(tests1[:5], tests2[:5]):
-        if test1["stdin"].strip():
-            assert " " in test1["stdin"], "Первый тест должен использовать пробелы"
-            assert "," in test2["stdin"], "Второй тест должен использовать запятые"
-            numbers1 = test1["stdin"].replace(" ", "").replace(",", "").replace("\n", "")
-            numbers2 = test2["stdin"].replace(" ", "").replace(",", "").replace("\n", "")
-            assert numbers1 == numbers2, "Числа должны быть одинаковыми"
+def test_every_test_has_exactly_k_output_lines():
+    task = Lab2Task(student="ab12", Nmax=50, K=3)
+    tests = task.generate_tests()
+    for test in tests:
+        assert len(test["expected_stdout"].splitlines()) == 3
 
 
 def test_empty_array_handling():
-    t = Lab2Task(student="ab12", Nmax=50, K=3)
-    tests = t.generate_tests()
-    
-    empty_test = None
-    for test in tests:
-        if test["id"] == "fixed_5":
-            empty_test = test
-            break
-    
-    assert empty_test is not None, "Должен быть тест с пустым массивом"
-    assert empty_test["stdin"] == "\n", "Пустой ввод"
-    
-    lines = empty_test["expected_stdout"].split("\n")
-    
-    line_count = empty_test["expected_stdout"].count("\n") + 1
-    
-    assert line_count == t.K, f"Должно быть {t.K} строк вывода для пустого массива, получено {line_count} строк"
-    
-    first_line = lines[0] if lines else ""
-    assert first_line in ["YES", "NO"], f"Первая строка должна быть YES или NO, получено: '{first_line}'"
+    task = Lab2Task(student="ab12", Nmax=50, K=3)
+    tests = task.generate_tests()
+    empty_test = next(test for test in tests if test["id"] == "fixed_5")
+    assert empty_test["stdin"] == "\n"
+    assert len(empty_test["expected_stdout"].splitlines()) == 3
+
+
+def test_parser_supports_new_block_format_and_preserves_blank_lines():
+    blob = """###main_x.c###
+int main(void) {
+
+    return 0;
+}
+###Makefile###
+all:
+\techo ok
+"""
+    entries = parse_student_solution_blob(blob)
+    assert entries[0][0] == "main_x.c"
+    assert "\n\n" in entries[0][1]
+    assert entries[1][0] == "Makefile"
+
 
 def test_check_method_exists():
-    t = Lab2Task(student="ab12", Nmax=50, K=2)
-    assert hasattr(t, "check"), "check должен быть методом"
-    assert callable(t.check), "check должен быть вызываемым"
+    task = Lab2Task(student="ab12", Nmax=50, K=2)
+    assert callable(task.check)
 
 
-def test_format_array_with_empty():
-    t = Lab2Task(student="ab12", Nmax=50, K=2)
-    assert t._format_array([]) == "", "Пустой массив должен давать пустую строку"
+@pytest.mark.parametrize("student", ["ab12", "ivanov", "petrov"])
+def test_variant_has_at_least_three_core_functions(student: str):
+    task = Lab2Task(student=student, Nmax=100, K=3)
+    variant = task._build_variant()
+    assert len(variant.core_functions) >= 3
 
 
-def test_format_array_with_sep():
-    t1 = Lab2Task(student="ab12", Nmax=50, K=2, sep=" ")
-    t2 = Lab2Task(student="ab12", Nmax=50, K=2, sep=",")
-    
-    arr = [1, 2, 3]
-    assert t1._format_array(arr) == "1 2 3", "Пробельный разделитель"
-    assert t2._format_array(arr) == "1,2,3", "Запятая как разделитель"
+def test_every_core_function_is_used_in_at_least_one_step():
+    task = Lab2Task(student="lalala", Nmax=100, K=4)
+    variant = task._build_variant()
+    used = {call for step in variant.steps for call in step.calls}
+    declared = {spec.name for spec in variant.core_functions}
+    assert declared <= used
+
+
+def test_generated_suffixes_have_required_lengths_and_valid_charset():
+    task = Lab2Task(student="lalala", Nmax=100, K=4)
+    variant = task._build_variant()
+
+    def suffix_of(name: str, prefix: str, tail: str = "") -> str:
+        assert name.startswith(prefix)
+        if tail:
+            assert name.endswith(tail)
+            name = name[: -len(tail)]
+        return name[len(prefix):]
+
+    alphabet = set("abcdefghijklmnopqrstuvwxyz0123456789")
+
+    main_suffix = suffix_of(variant.main_file, "main_", ".c")
+    assert len(main_suffix) == 4
+    assert set(main_suffix) <= alphabet
+
+    file_suffixes = [
+        suffix_of(variant.data_io_module, "data_io_"),
+        suffix_of(variant.core_module, "core_"),
+        suffix_of(variant.executable, "lab2_"),
+        *[suffix_of(step.module, "step_") for step in variant.steps],
+    ]
+    for suffix in file_suffixes:
+        assert len(suffix) == 3
+        assert set(suffix) <= alphabet
+
+    function_suffixes = [
+        *[spec.name[len("cf_") :] for spec in variant.core_functions],
+        *[step.name[len("sf_") :] for step in variant.steps],
+    ]
+    for suffix in function_suffixes:
+        assert len(suffix) == 3
+        assert set(suffix) <= alphabet
+
+
+def test_format_test_fail_message_has_expected_and_no_reason_label():
+    task = Lab2Task(student="lalala", Nmax=100, K=4)
+    msg = task._format_test_fail_message(
+        test_index=1,
+        test_id="fixed_1",
+        stdin_text="1 2 3\n",
+        expected_text="1 2 3\n4 5 6",
+        actual_text="1 2 3\n4 5 0",
+    )
+    assert "Ожидалось:\n1 2 3\n4 5 6" in msg
+    assert "Получено:\n1 2 3\n4 5 0" in msg

@@ -1,9 +1,9 @@
 import argparse
-from prog_labgen.base_module import CLIParser, add_common_cli_args, get_common_cli_args
+import warnings
 
+from prog_labgen.base_module import CLIParser, add_common_cli_args, get_common_cli_args
 from prog_labgen.lab2.lab2 import Lab2Task
 
-import warnings
 warnings.filterwarnings("ignore", category=RuntimeWarning, module="runpy")
 
 
@@ -11,7 +11,6 @@ def create_lab2_task(args: argparse.Namespace) -> Lab2Task:
     return Lab2Task(
         Nmax=args.Nmax,
         K=args.K,
-        sep=args.sep,
         **get_common_cli_args(args),
     )
 
@@ -19,8 +18,7 @@ def create_lab2_task(args: argparse.Namespace) -> Lab2Task:
 def add_lab2_cli_args(parser: argparse.ArgumentParser) -> None:
     add_common_cli_args(parser)
     parser.add_argument("--Nmax", type=int, default=100, help="Максимальный размер массива")
-    parser.add_argument("--K", type=int, default=3, help="Количество core‑функций")
-    parser.add_argument("--sep", type=str, default=" ", help="Разделитель чисел во вводе/выводе")
+    parser.add_argument("--K", type=int, default=3, help="Количество step-функций")
     parser.set_defaults(func=create_lab2_task)
 
 
@@ -40,10 +38,14 @@ if __name__ == "__main__":
         print(task.render_assignment())
     elif args.mode == "dry-run":
         import json
-        print(json.dumps(
-            {"assignment": task.render_assignment(), "tests": task.generate_tests()},
-            ensure_ascii=False, indent=2,
-        ))
+
+        print(
+            json.dumps(
+                {"assignment": task.render_assignment(), "tests": task.generate_tests()},
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
     elif args.mode == "check":
         ok, msg = task.check(args.solution)
         print("OK" if ok else "FAIL")
