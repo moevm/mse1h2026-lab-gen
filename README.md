@@ -9,7 +9,7 @@
 - Пример комманды выдачи условия: 
 ``` python main.py lab1 --student Басыров --mode=init ```
 - Пример комманды проверки: 
-``` python main.py lab1 --student Басыров --mode=check --solution=./examples/lab_compile.c ```
+``` python main.py lab1 --student Басыров --mode=check --solution=./examples/lab1_solution_good.c ```
 
 ## Проверка работоспособности
 Инструкции по проверке работоспособности проекта (основной функциональности и результатов).
