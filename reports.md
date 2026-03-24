@@ -13,10 +13,10 @@
 
 ## Итерация №2
 Материалы:
- - (specification.md)[https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/specification.md] - спецификация требований
- - (lab1_consept.md)[https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/lab1_consept.md] - концепция задачи для 1 лабораторной работы
- - (lab2_consept.md)[https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/lab2_consept.md] - концепция задачи для 2 лабораторной работы
- - (lab3_consept.md)[https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/lab3_consept.md] - концепция задачи для 3 лабораторной работы
- - (iteration_1.pdf)[https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/iteration_1.pdf] - презентация проекта
- - (screencast.mp4)[https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/screencast.mp4] - скринкаст
+ - [specification.md](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/specification.md) - спецификация требований
+ - [lab1_consept.md](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/lab1_consept.md) - концепция задачи для 1 лабораторной работы
+ - [lab2_consept.md](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/lab2_consept.md) - концепция задачи для 2 лабораторной работы
+ - [lab3_consept.md](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/lab3_consept.md) - концепция задачи для 3 лабораторной работы
+ - [iteration_1.pdf](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/iteration_1.pdf) - презентация проекта
+ - [screencast.mp4](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/screencast.mp4) - скринкаст
 
