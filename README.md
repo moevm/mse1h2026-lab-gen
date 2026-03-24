@@ -19,3 +19,4 @@
  - specification.md - спецификация требований(представлена также в README)
  - lab1_consept.md - концепция задачи для лабораторной работы
  - iteration_1.pdf - презентация проекта
+ - [скринкаст](https://drive.google.com/file/d/1qG-yZSwVHuEi6p3Q3PLcrczFBR5pU8yT/view?usp=sharing)
