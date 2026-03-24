@@ -1,9 +1,22 @@
-# mse-template
-## О проекте
-### Постановка задачи
+## Установка и запуск
+Для запуска нужно:
 
-### Требования
+- Выполните комманду ```docker build -t my-app . && docker run --rm -it my-app ```
+- В появившемся терминале введите комманду для просмотра доступных действий
+ ``` python main.py -h ```
+- После выберете лабораторную работу, которую хотите проверить/получить условие. Например, для просмотра флагов настройки 1 лабораторной работы выполните:
+ ``` python main.py lab1 -h ```
+- Пример комманды выдачи условия: 
+``` python main.py lab1 --student Басыров --mode=init ```
+- Пример комманды проверки: 
+``` python main.py lab1 --student Басыров --mode=check --solution=./examples/lab_compile.c ```
 
-### Сценарии использования
+## Итерация №2
+Материалы:
+ - (specification.md)[https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/specification.md] - спецификация требований
+ - (lab1_consept.md)[https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/lab1_consept.md] - концепция задачи для 1 лабораторной работы
+ - (lab2_consept.md)[https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/lab2_consept.md] - концепция задачи для 2 лабораторной работы
+ - (lab3_consept.md)[https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/lab3_consept.md] - концепция задачи для 3 лабораторной работы
+ - (iteration_1.pdf)[https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/iteration_1.pdf] - презентация проекта
+ - (screencast.mp4)[https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/screencast.mp4] - скринкаст
 
-## Итерация №Х
