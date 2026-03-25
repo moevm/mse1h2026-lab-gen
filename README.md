@@ -1,24 +1,66 @@
 ## Установка и запуск
-Для запуска нужно:
 
-- Выполните комманду ```docker build -t my-app . && docker run --rm -it my-app ```
-- В появившемся терминале введите комманду для просмотра доступных действий
- ``` python main.py -h ```
-- После выберете лабораторную работу, которую хотите проверить/получить условие. Например, для просмотра флагов настройки 1 лабораторной работы выполните:
- ``` python main.py lab1 -h ```
-- Пример комманды выдачи условия: 
-``` python main.py lab1 --student Басыров --mode=init ```
-- Пример комманды проверки: 
-``` python main.py lab1 --student Басыров --mode=check --solution=./examples/lab1_solution_good.c ```
+Для запуска проекта нужно:
+
+- собрать Docker-образ:
+```bash
+docker build -t my-app .
+```
+- запустить контейнер:
+```bash
+docker run --rm -it my-app
+```
+- внутри контейнера посмотреть доступные команды:
+```bash
+python main.py -h
+```
+
+Примеры использования:
+
+- показать параметры ЛР1:
+```bash
+python main.py lab1 -h
+```
+- сгенерировать вариант ЛР1:
+```bash
+python main.py lab1 --student Басыров --mode=init
+```
+- сгенерировать вариант ЛР2:
+```bash
+python main.py lab2 --student Басыров --mode=init
+```
+- сгенерировать вариант ЛР3:
+```bash
+python main.py lab3 --student Басыров --mode=init
+```
+- проверить решение ЛР1:
+```bash
+python main.py lab1 --student Басыров --mode=check --solution=./examples/lab1_solution_good.c
+```
 
 ## Проверка работоспособности
-Инструкции по проверке работоспособности проекта (основной функциональности и результатов).
+Проверка работоспособности выполняется следующими командами:
+
+```bash
+python main.py -h
+python main.py lab1 --student Басыров --mode=init
+python main.py lab1 --student Басыров --mode=check --solution=./examples/lab1_solution_good.c
+python main.py lab2 --student Басыров --mode=init
+python main.py lab3 --student Басыров --mode=init
+```
+
+Ожидаемый результат:
+
+- help показывает доступные лабораторные работы;
+- команда `init` печатает вариант для выбранного студента;
+- команда `check` на `lab1_solution_good.c` завершает проверку успешно.
 
 ## Дополнительная информация
 Все материалы находятся в ветке reports в папке docs:
  - specification.md - спецификация требований(представлена также в README)
- - lab1_consept.md - концепция задачи для 1 лабораторной работы
- - lab2_consept.md - концепция задачи для 2 лабораторной работы
- - lab3_consept.md - концепция задачи для 3 лабораторной работы
- - iteration_1.pdf - презентация проекта
+ - lab1_concept.md - концепция задачи для 1 лабораторной работы
+ - lab2_concept.md - концепция задачи для 2 лабораторной работы
+ - lab3_concept.md - концепция задачи для 3 лабораторной работы
+ - iteration_1.pdf - презентация проекта по первой итерации
+ - iteration_2.pdf - презентация проекта по второй итерации
  - screencast.mp4 - скринкаст
