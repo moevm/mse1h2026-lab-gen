@@ -65,7 +65,7 @@ TASKS: dict[int, TaskSpec] = {
 class Lab1Task(BaseTask):
     def __init__(
         self,
-        student: str,
+        seed: str,
         n_max: int = 100,
         sep: str = " ",
         k: int = 3,
@@ -73,7 +73,7 @@ class Lab1Task(BaseTask):
         fail_on_first_test: bool = True,
         compiler: str | None = None,
     ) -> None:
-        super().__init__(student=student, fail_on_first_test=fail_on_first_test, compiler=compiler)
+        super().__init__(seed=seed, fail_on_first_test=fail_on_first_test, compiler=compiler)
         self.n_max = n_max
         self.sep = sep
         self.k = k
@@ -100,7 +100,7 @@ class Lab1Task(BaseTask):
                     params[param_name] = rnd.randint(1, 5)
 
         self._variant = {
-            "student": self.student,
+            "seed": self.seed,
             "seed_hash": self.make_seed_hash(),
             "tasks": selected_tasks,
             "params": params,
@@ -119,7 +119,7 @@ class Lab1Task(BaseTask):
         variant = self._build_variant()
         lines = [
             "Концепция варианта ЛР1",
-            f"Студент: {variant['student']}",
+            f"Seed: {variant['seed']}",
             f"Seed hash: {variant['seed_hash']}",
             f"Nmax: {variant['params']['N_max']}",
             f"K: {variant['params']['K']}",
