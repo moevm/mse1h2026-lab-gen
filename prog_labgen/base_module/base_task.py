@@ -14,16 +14,16 @@ from typing import Any
 class BaseTask(ABC):
     def __init__(
         self,
-        student: str,
+        seed: str,
         fail_on_first_test: bool = True,
         compiler: str | None = None,
     ) -> None:
-        self.student = student
+        self.seed = seed
         self.fail_on_first_test = fail_on_first_test
         self.compiler = compiler or "gcc"
 
     def make_seed_hash(self, salt: str = "") -> int:
-        payload = self.student if not salt else f"{self.student}:{salt}"
+        payload = self.seed if not salt else f"{self.seed}:{salt}"
         return int(hashlib.md5(payload.encode("utf-8")).hexdigest(), 16)
 
     def make_random(self, salt: str = "") -> random.Random:

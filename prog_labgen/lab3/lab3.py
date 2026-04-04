@@ -81,7 +81,7 @@ class KeywordRule:
 
 @dataclass(frozen=True)
 class Variant:
-    student: str
+    seed: str
     seed_hash: int
     select_rule: SelectRule
     rewrite_rule: RewriteRule
@@ -125,7 +125,7 @@ COMPARISONS: dict[str, Any] = {
 class Lab3Task(BaseTask):
     def __init__(
             self,
-            student: str,
+            seed: str,
             text_max: int = 10000,
             sentence_max: int = 200,
             word_max: int = 64,
@@ -133,7 +133,7 @@ class Lab3Task(BaseTask):
             fail_on_first_test: bool = True,
             compiler: str | None = None
     ) -> None:
-        super().__init__(student=student, fail_on_first_test=fail_on_first_test, compiler=compiler)
+        super().__init__(seed=seed, fail_on_first_test=fail_on_first_test, compiler=compiler)
         self.limits = Limits(
             text_max=text_max,
             sentence_max=sentence_max,
@@ -152,7 +152,7 @@ class Lab3Task(BaseTask):
         keyword_kind = rng.choice(list(KeywordRuleKind))
 
         self._variant = Variant(
-            student=self.student,
+            seed=self.seed,
             seed_hash=self.make_seed_hash(),
             select_rule=_generate_select_rule(select_kind, rng, self.limits),
             rewrite_rule=_generate_rewrite_rule(rewrite_kind, rng),
@@ -165,7 +165,7 @@ class Lab3Task(BaseTask):
         variant = self._build_variant()
         lines = [
             "Концепция варианта ЛР3",
-            f"Студент: {variant.student}",
+            f"Seed: {variant.seed}",
             f"Seed hash: {variant.seed_hash}",
             f"TextMax: {variant.limits.text_max}",
             f"SentenceMax: {variant.limits.sentence_max}",
