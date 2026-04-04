@@ -101,7 +101,7 @@ def test_choose_keyword_by_position_fallback_to_last():
 
 def test_solve_text_end_to_end():
     variant = Variant(
-        student="test",
+        seed="test",
         seed_hash=1,
         select_rule=SelectRule(kind=SelectRuleKind.POSITION, position_type="odd"),
         rewrite_rule=RewriteRule(kind=RewriteRuleKind.REVERSE_WORDS),
@@ -127,8 +127,8 @@ def test_normalize_output():
 
 
 def test_build_variant_is_deterministic():
-    task1 = Lab3Task(student="ivanov", tests_count=3)
-    task2 = Lab3Task(student="ivanov", tests_count=3)
+    task1 = Lab3Task(seed="ivanov", tests_count=3)
+    task2 = Lab3Task(seed="ivanov", tests_count=3)
 
     v1 = task1._build_variant()
     v2 = task2._build_variant()
@@ -137,7 +137,7 @@ def test_build_variant_is_deterministic():
 
 
 def test_generate_tests_count_and_shape():
-    task = Lab3Task(student="ivanov", tests_count=3)
+    task = Lab3Task(seed="ivanov", tests_count=3)
     tests = task.generate_tests()
 
     assert len(tests) == 3
@@ -148,7 +148,7 @@ def test_generate_tests_count_and_shape():
 
 
 def test_check_success(monkeypatch, tmp_path):
-    task = Lab3Task(student="ivanov", tests_count=1)
+    task = Lab3Task(seed="ivanov", tests_count=1)
 
     fake_bin_dir = tmp_path / "build"
     fake_bin_dir.mkdir()
