@@ -26,7 +26,7 @@ def rand_sample(rng: random.Random, values: Sequence[Any], k: int) -> list[Any]:
     return rng.sample(list(values), k)
 
 
-def rand_partition_sizes(rng: random.Random, total: int, parts: int, minimum: int = 0) -> list[int]:
+def rand_partition_sizes(rng: random.Random, total: int, parts: int, minimum: int = 1) -> list[int]:
     if parts < 1:
         raise ValueError("parts must be greater than or equal to 1")
     if minimum < 0:
