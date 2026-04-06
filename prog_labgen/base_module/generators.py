@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 from typing import Any, Iterable, Sequence
 
-SUFFIX_ALPHABET = "abcdefghijklmnopqrstuvwxyz"
+SUFFIX_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789"
 COMPARISON_OPERATORS: tuple[str, ...] = ("<", "<=", "==", ">=", ">")
 POSITION_TYPES: tuple[str, ...] = ("even", "odd")
 DIRECTIONS: tuple[str, ...] = ("left", "right")
