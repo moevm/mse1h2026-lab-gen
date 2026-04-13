@@ -44,7 +44,7 @@ class StepFunctionSpec:
 
 @dataclass(frozen=True)
 class Variant:
-    student: str
+    seed: str
     seed_hash: int
     Nmax: int
     K: int
@@ -180,12 +180,12 @@ def _apply_inverse_deterministic_core(arr: List[int], spec: CoreFunctionSpec) ->
 class Lab2Task(BaseTask):
     def __init__(
         self,
-        student: str,
+        seed: str,
         Nmax: int = 100,
         K: int = 3,
         **kwargs,
     ) -> None:
-        super().__init__(student=student, **kwargs)
+        super().__init__(seed=seed, **kwargs)
         self.Nmax = Nmax
         self.K = K
         self._variant: Variant | None = None
@@ -224,7 +224,7 @@ class Lab2Task(BaseTask):
             step_specs.append(StepFunctionSpec(name=step_name, module=module, calls=tuple(calls)))
 
         self._variant = Variant(
-            student=self.student,
+            seed=self.seed,
             seed_hash=self.make_seed_hash("lab2"),
             Nmax=self.Nmax,
             K=self.K,
@@ -242,7 +242,7 @@ class Lab2Task(BaseTask):
 
         lines = [
             "Вариант 2-й лабораторной",
-            f"Студент: {variant.student}",
+            f"Seed: {variant.seed}",
             f"Seed hash: {variant.seed_hash}",
             f"Nmax: {variant.Nmax}",
             f"K: {variant.K}",

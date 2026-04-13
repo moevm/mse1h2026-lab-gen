@@ -7,7 +7,7 @@ HEADER_RE = re.compile(r"^###\s*(.*?)\s*###\s*$")
 LEGACY_HEADER_RE = re.compile(r"^###\s+(.*?)\s*$")
 
 
-def parse_student_solution_blob(text: str) -> List[Tuple[str, str]]:
+def parse_solution_blob(text: str) -> List[Tuple[str, str]]:
     if not text.strip():
         return []
 
