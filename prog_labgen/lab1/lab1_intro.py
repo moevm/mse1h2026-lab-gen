@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable
 
-from prog_labgen.base_module import BaseTask
+from prog_labgen.base_module import BaseTask, rand_int, rand_int_array, rand_sample
 
 
 @dataclass(frozen=True)
@@ -61,6 +61,10 @@ TASKS: dict[int, TaskSpec] = {
     6: TaskSpec("Количество элементов, которые по модулю меньше L", ("L",), "Посчитайте количество элементов массива, для которых |a[i]| < L.", count_abs_lt),
 }
 
+DISPLAY_NAMES = {
+    "K_step": "K",
+}
+
 
 class Lab1Task(BaseTask):
     def __init__(
@@ -85,19 +89,19 @@ class Lab1Task(BaseTask):
             return self._variant
 
         rnd = self.make_random()
-        selected_tasks = rnd.sample(sorted(TASKS.keys()), self.k)
+        selected_tasks = rand_sample(rnd, sorted(TASKS.keys()), self.k)
         params = {"N_max": self.n_max, "K": self.k}
 
         for task_id in selected_tasks:
             for param_name in TASKS[task_id].params:
                 if param_name in {"M", "D", "L", "T", "P"}:
-                    params[param_name] = rnd.randint(2, 12)
+                    params[param_name] = rand_int(rnd, 2, 12)
                 elif param_name == "A":
-                    params[param_name] = rnd.randint(0, int(self.n_max * 0.2))
+                    params[param_name] = rand_int(rnd, 0, int(self.n_max * 0.2))
                 elif param_name == "B":
-                    params[param_name] = rnd.randint(int(self.n_max * 0.8), self.n_max)
+                    params[param_name] = rand_int(rnd, int(self.n_max * 0.8), self.n_max)
                 elif param_name == "K_step":
-                    params[param_name] = rnd.randint(1, 5)
+                    params[param_name] = rand_int(rnd, 1, 5)
 
         self._variant = {
             "seed": self.seed,
@@ -109,8 +113,13 @@ class Lab1Task(BaseTask):
 
     def _make_random_array(self, salt: str) -> list[int]:
         rnd = self.make_random(salt)
-        size = rnd.randint(max(1, int(self.n_max * 0.1)), self.n_max)
-        return [rnd.randint(-25, 25) for _ in range(size)]
+        return rand_int_array(
+            rnd,
+            size_min=max(1, int(self.n_max * 0.1)),
+            size_max=self.n_max,
+            value_min=-25,
+            value_max=25,
+        )
 
     def _format_stdin(self, arr: list[int]) -> str:
         return self.sep.join(str(value) for value in arr) + "\n"
@@ -122,7 +131,7 @@ class Lab1Task(BaseTask):
             f"Seed: {variant['seed']}",
             f"Seed hash: {variant['seed_hash']}",
             f"Nmax: {variant['params']['N_max']}",
-            f"K: {variant['params']['K']}",
+            f"Кол-во подзадач: {variant['params']['K']}",
             "Программа должна читать массив целых чисел из stdin и печатать результаты всех назначенных подзадач по одному в строке.",
             "Назначенные подзадачи:",
         ]
@@ -130,9 +139,10 @@ class Lab1Task(BaseTask):
         for index, task_id in enumerate(variant["tasks"], start=1):
             task = TASKS[task_id]
             param_values = ", ".join(
-                f"{param}={variant['params'][param]}" for param in task.params
+                f"{DISPLAY_NAMES.get(param, param)}={variant['params'][param]}"
+                for param in task.params
             )
-            lines.append(f"{index}. {task.title} | {param_values}")
+            lines.append(f"{index}. {task.title} ({param_values})")
             lines.append(f"   {task.description}")
 
         return "\n".join(lines)
