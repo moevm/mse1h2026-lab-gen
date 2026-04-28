@@ -146,3 +146,119 @@ def solve(line: str, query: str, variant: Variant) -> SolveResult:
 
     return SolveResult(arr, found, summary)
 
+
+class Lab4Task(BaseTask):
+    def __init__(
+        self,
+        seed: str,
+        line_max: int = 10000,
+        element_max: int = 200,
+        word_max: int = 64,
+        tests_count: int = 10,
+        fail_on_first_test: bool = True,
+        compiler: str | None = None,
+    ) -> None:
+        super().__init__(seed=seed,
+                         fail_on_first_test=fail_on_first_test,
+                         compiler=compiler)
+        self.limits = Limits(line_max=line_max, element_max=element_max, word_max=word_max)
+        self.tests_count = max(1, tests_count)
+        self._variant: Variant | None = None
+
+    def _build_variant(self) -> Variant:
+        if self._variant is not None:
+            return self._variant
+
+        rng = self.make_random()
+
+        # разделители: непустое подмножество { ' ', '\t', ',', ';' }
+        delimiters_pool = [' ', '\t', ',', ';']
+        k = rng.randint(1, len(delimiters_pool))
+        delimiters = "".join(rng.sample(delimiters_pool, k))
+
+        select_rule = rng.choice([
+            "digits", "alpha", "lower", "upper", "prefix", "substring"
+        ])
+
+        pattern = None
+        if select_rule in ("prefix", "substring"):
+            pattern = "".join(rng.choice("abcdefghijklmnopqrstuvwxyz") for _ in range(3))
+
+        self._variant = Variant(
+            seed=self.seed,
+            seed_hash=self.make_seed_hash(),
+            delimiters=delimiters,
+            allow_empty=rng.choice([True, False]),
+            allow_duplicates=rng.choice([True, False]),
+            select_rule=select_rule,
+            sort_rule=rng.choice(["asc", "desc"]),
+            summary_rule=rng.choice(["count", "first_last", "maxlen", "minlen"]),
+            pattern=pattern,
+            limits=self.limits,
+        )
+        return self._variant
+
+    def render_assignment(self) -> str:
+        v = self._build_variant()
+        lines = [
+            "Лабораторная работа 4",
+            f"Seed: {v.seed}",
+            f"Seed hash: {v.seed_hash}",
+            f"LineMax: {v.limits.line_max}",
+            f"ElementMax: {v.limits.element_max}",
+            f"WordMax: {v.limits.word_max}",
+            "Напишите программу на языке Си, которая читает строку элементов, обрабатывает её и выводит результат, используя функции стандартной библиотеки.",
+            "На вход программе подаются:",
+            "- строка с элементами",
+            "- строка-запрос",
+            "Общие требования:",
+            "- Считать строку элементов и стоку-запрос",
+            f"- Разделить строку на элементы по следующим разделителям (сами разделители удаляются): {repr(v.delimiters)}",
+            f"- После разделения строки пустые элементы необходимо {'сохранить' if v.allow_empty else 'удалить'}",
+            f"- Среди оставшихся элементов выполнить отбор по правилу:",
+            f"\t{_describe_select_rule(v)}",
+            f"Отсортировать оставшиеся элементы по правилу:",
+            f"\t{_describe_sort_rule(v)}",
+            f"- Если образовались одинаковые элементы, то нужно оставить {'все' if v.allow_duplicates else 'только один'} из них",
+            "- определить наличие строки-запроса среди выбранных элементов через bsearch",
+            "В качестве ответа нужно вывести:",
+            "- Полученные после обработки элементы в одну строку через пробел",
+            "- Вывести результат поиска строки-запроса среди элементов (exists/doesn't exist)",
+            f"- Вывести {_describe_summary_rule(v)}",
+        ]
+        return "\n".join(lines)
+
+
+def _describe_select_rule(variant: Variant) -> str:
+    if variant.select_rule == "digits":
+        return "Выбрать только те элементы, каждый символ которых является цифрой."
+    if variant.select_rule == "alpha":
+        return "Выбрать только те элементы, каждый символ которых является буквой."
+    if variant.select_rule == "lower":
+        return "Выбрать только те буквенные элементы, каждый символ которых находится в нижнем регистре."
+    if variant.select_rule == "upper":
+        return "Выбрать только те буквенные элементы, каждый символ которых находится в верхнем регистре."
+    if variant.select_rule == "prefix":
+        if variant.pattern:
+            return f"Выбрать только те элементы, которые начинаются с префикса {variant.pattern}."
+    if variant.select_rule == "substring":
+        if variant.pattern:
+            return f"Выбрать только те элементы, которые содержат заданную подстроку {variant.pattern}."
+    return ""
+
+def _describe_sort_rule(variant: Variant) -> str:
+    if variant.sort_rule == "asc":
+        return "Отсортировать выбранные элементы лексикографически по возрастанию."
+    if variant.sort_rule == "desc":
+        return "Отсортировать выбранные элементы лексикографически по убыванию."
+    return ""
+
+def _describe_summary_rule(variant: Variant) -> str:
+    if variant.summary_rule == "count":
+        return "Количество элементов, полученное после отбора"
+    if variant.summary_rule == "maxlen":
+        return "Вывести длину самого длинного элемента в отобранном наборе"
+    if variant.summary_rule == "minlen":
+        return "Вывести длину самого короткого элемента в отобранном наборе"
+    if variant.summary_rule == "first_last":
+        return "Вывести первый и последний элементы в отобранном наборе"
