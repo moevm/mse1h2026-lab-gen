@@ -227,8 +227,8 @@ class Lab4Task(BaseTask):
             f"- Вывести {_describe_summary_rule(v)}",
         ]
         return "\n".join(lines)
-    
-        def generate_tests(self) -> list[dict[str, Any]]:
+
+    def generate_tests(self) -> list[dict[str, Any]]:
         variant = self._build_variant()
         tests: list[dict[str, Any]] = []
 
@@ -366,8 +366,6 @@ class Lab4Task(BaseTask):
         all_passed = passed_tests == total_tests
         footer = "Все тесты пройдены" if all_passed else "Есть ошибки"
         return all_passed, "\n".join(messages + [summary, footer])
-
-
 
 
 def _describe_select_rule(variant: Variant) -> str:
