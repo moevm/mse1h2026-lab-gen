@@ -227,6 +227,147 @@ class Lab4Task(BaseTask):
             f"- Вывести {_describe_summary_rule(v)}",
         ]
         return "\n".join(lines)
+    
+        def generate_tests(self) -> list[dict[str, Any]]:
+        variant = self._build_variant()
+        tests: list[dict[str, Any]] = []
+
+        # фиксированные тесты (базовые сценарии)
+        fixed_inputs = [
+            ("a,b,c", "b"),
+            ("1,2,3", "4"),
+            ("abc,,def", "abc"),
+            ("  one  two  ", "two"),
+            ("Aa,Bb,Cc", "bb"),
+        ]
+        for i, (line, query) in enumerate(fixed_inputs, start=1):
+            stdin_data = f"{line}\n{query}\n"
+            expected = normalize_output(solve(line, query, variant).render_output()) + "\n"
+            tests.append({
+                "input_text": stdin_data,
+                "stdin": stdin_data,
+                "expected_stdout": expected,
+                "test_id": f"fixed_{i}"
+            })
+
+        # случайные тесты
+        rng = self.make_random("testgen")
+        for i in range(len(fixed_inputs) + 1, self.tests_count + 1):
+            stdin_data, expected = self._generate_random_test(variant, rng)
+            tests.append({
+                "input_text": stdin_data,
+                "stdin": stdin_data,
+                "expected_stdout": expected,
+                "test_id": f"random_{i}"
+            })
+
+        return tests
+
+    def _generate_random_test(self, variant: Variant, rng) -> tuple[str, str]:
+        """Создаёт случайный вход (строка элементов + запрос) и возвращает (stdin, expected_stdout)."""
+        # сколько элементов сгенерировать (не превышая лимит)
+        n = rng.randint(0, min(10, variant.limits.element_max))
+        elements = []
+        for _ in range(n):
+            # длина элемента
+            length = rng.randint(0, variant.limits.word_max)
+            # набор символов: буквы, цифры, или смесь
+            kind = rng.choice(["alpha", "digit", "mixed"])
+            if kind == "alpha":
+                chars = [rng.choice("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") for _ in range(length)]
+            elif kind == "digit":
+                chars = [rng.choice("0123456789") for _ in range(length)]
+            else:
+                pool = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+                chars = [rng.choice(pool) for _ in range(length)]
+            elements.append("".join(chars))
+
+        # разделители из варианта
+        sep = list(variant.delimiters)
+        # собираем строку, вставляя разделители и иногда создавая пустые элементы
+        parts = []
+        for el in elements:
+            parts.append(el)
+            # случайный разделитель (или несколько подряд для пустых элементов)
+            if rng.random() < 0.3 and variant.allow_empty:
+                parts.append(rng.choice(sep) * rng.randint(1, 3))
+            else:
+                parts.append(rng.choice(sep))
+        line = "".join(parts[:-1])  # последний разделитель убираем, split сам обработает конец
+
+        # обрезаем до line_max
+        line = line[:variant.limits.line_max]
+
+        # запрос: либо один из элементов, либо случайная строка
+        if elements and rng.random() < 0.7:
+            query = rng.choice(elements)
+        else:
+            query = "".join(rng.choice("abcdefghijklmnopqrstuvwxyz") for _ in range(rng.randint(0, 5)))
+
+        stdin_data = f"{line}\n{query}\n"
+        expected = normalize_output(solve(line, query, variant).render_output()) + "\n"
+        return stdin_data, expected
+
+    def check(self, solution_path: str) -> tuple[bool, str]:
+        binary_path, compile_error = self.compile_c_solution(
+            solution_path,
+            output_name="lab4_solution",
+        )
+        if compile_error is not None or binary_path is None:
+            return False, f"Ошибка компиляции решения:\n{compile_error}"
+
+        total_tests = 0
+        passed_tests = 0
+        messages: list[str] = []
+
+        try:
+            for index, test_case in enumerate(self.generate_tests(), start=1):
+                total_tests += 1
+                obtained, runtime_error = self.run_binary(binary_path, test_case["stdin"])
+
+                if runtime_error is not None:
+                    messages.append(
+                        f"Тест {index}: FAIL\n"
+                        f"Вход:\n{test_case['input_text']}\n"
+                        f"Ошибка выполнения:\n{runtime_error}"
+                    )
+                    if self.fail_on_first_test:
+                        break
+                    continue
+
+                # нормализуем строки перед сравнением
+                expected = test_case["expected_stdout"]
+                actual = (normalize_output(obtained or "")) + "\n"
+
+                if actual == expected:
+                    passed_tests += 1
+                    messages.append(f"Тест {index}: OK")
+                    continue
+
+                messages.append(
+                    f"Тест {index}: FAIL\n"
+                    f"Вход:\n{test_case['input_text']}\n"
+                    f"Ожидалось:\n{expected}\n"
+                    f"Получено:\n{actual}"
+                )
+                if self.fail_on_first_test:
+                    break
+        finally:
+            # очистка временной папки
+            if binary_path is not None and binary_path.exists():
+                binary_path.unlink()
+            try:
+                binary_path.parent.rmdir()
+            except OSError:
+                pass
+            shutil.rmtree(str(binary_path.parent), ignore_errors=True)
+
+        summary = f"Итог: {passed_tests}/{total_tests} тестов пройдено"
+        all_passed = passed_tests == total_tests
+        footer = "Все тесты пройдены" if all_passed else "Есть ошибки"
+        return all_passed, "\n".join(messages + [summary, footer])
+
+
 
 
 def _describe_select_rule(variant: Variant) -> str:
