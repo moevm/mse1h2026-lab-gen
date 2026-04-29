@@ -151,4 +151,22 @@ int main() {
         free(words);
         free(sentence);
     }
+
+    // Печать итогового результата
+    if (!printed) {
+        printf("EMPTY\n");
+        printf("Key words: EMPTY\n");
+    } else {
+        printf("Key words:");
+        for (int i = 0; i < keyword_count; i++) {
+            printf(" %s", keywords[i]);
+        }
+        printf("\n");
+    }
+
+    // Освобождаем память
+    free(keywords);
+    free(text);
+
+    return 0;
 }
