@@ -43,4 +43,112 @@ int main() {
     // Маркер ### не входит в обработку
     char *marker = strstr(text, TEXT_END);
     int process_size = marker == NULL ? size : (int)(marker - text);
+
+    // Массив ключевых слов
+    char **keywords = NULL;
+    int keyword_count = 0;
+    int keyword_capacity = INITIAL_WORD_CAPACITY;
+
+    keywords = (char**)malloc(keyword_capacity * sizeof(char*));
+    if (keywords == NULL) {
+        fprintf(stderr, "Ошибка выделения памяти\n");
+        free(text);
+        return 1;
+    }
+
+    int printed = 0;
+    int sentence_start = 0;
+
+    // Разбор предложений по символам . ; ? !
+    for (int i = 0; i < process_size; i++) {
+        if (text[i] != '.' && text[i] != ';' && text[i] != '?' && text[i] != '!') {
+            continue;
+        }
+
+        char ending = text[i];
+        int sentence_len = i - sentence_start;
+
+        char *sentence = (char*)malloc((sentence_len + 1) * sizeof(char));
+        if (sentence == NULL) {
+            fprintf(stderr, "Ошибка выделения памяти\n");
+            free(keywords);
+            free(text);
+            return 1;
+        }
+
+        memcpy(sentence, text + sentence_start, sentence_len);
+        sentence[sentence_len] = '\0';
+        sentence_start = i + 1;
+
+        // Пробелы и табуляции в начале предложения удаляются
+        char *normalized = sentence;
+        while (*normalized == ' ' || *normalized == '\t') {
+            normalized++;
+        }
+
+        // Делим предложение на слова
+        char **words = NULL;
+        int word_count = 0;
+        int word_capacity = INITIAL_WORD_CAPACITY;
+
+        words = (char**)malloc(word_capacity * sizeof(char*));
+        if (words == NULL) {
+            fprintf(stderr, "Ошибка выделения памяти\n");
+            free(sentence);
+            free(keywords);
+            free(text);
+            return 1;
+        }
+
+        char *token = strtok(normalized, " \t\n\r");
+        while (token != NULL) {
+            if (word_count >= word_capacity) {
+                word_capacity *= 2;
+                char **new_words = (char**)realloc(words, word_capacity * sizeof(char*));
+                if (new_words == NULL) {
+                    fprintf(stderr, "Ошибка выделения памяти\n");
+                    free(words);
+                    free(sentence);
+                    free(keywords);
+                    free(text);
+                    return 1;
+                }
+                words = new_words;
+            }
+            words[word_count++] = token;
+            token = strtok(NULL, " \t\n\r");
+        }
+
+        // select_rule: выбрать предложение, если число слов == WORD_COUNT
+        if (word_count == WORD_COUNT) {
+            // rewrite_rule: развернуть порядок слов
+            for (int j = word_count - 1; j >= 0; j--) {
+                printf("%s", words[j]);
+                if (j > 0) {
+                    printf(" ");
+                }
+            }
+            printf("%c\n", ending);
+
+            // keyword_rule: выбрать слово с номером KEYWORD_POS после преобразования
+            if (keyword_count >= keyword_capacity) {
+                keyword_capacity *= 2;
+                char **new_keywords = (char**)realloc(keywords, keyword_capacity * sizeof(char*));
+                if (new_keywords == NULL) {
+                    fprintf(stderr, "Ошибка выделения памяти\n");
+                    free(words);
+                    free(sentence);
+                    free(keywords);
+                    free(text);
+                    return 1;
+                }
+                keywords = new_keywords;
+            }
+            keywords[keyword_count++] = words[word_count - KEYWORD_POS];
+            printed = 1;
+        }
+
+        free(words);
+        free(sentence);
+    }
 }
