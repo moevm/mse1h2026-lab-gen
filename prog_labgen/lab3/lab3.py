@@ -5,23 +5,48 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Iterable
 
-from prog_labgen.base_module import BaseTask
+from prog_labgen.base_module import (
+    BaseTask,
+    build_faker,
+    faker_text,
+    rand_bool,
+    rand_choice,
+    rand_comparison,
+    rand_direction,
+    rand_int,
+    rand_position_type,
+)
+
+"""
+Использование внешних зависимостей
+----------------------------------
+
+Для генерации тестовых данных в данной лабораторной работе используется
+библиотека Faker.
+
+Если библиотека уже установлена в используемом Python-окружении,
+дополнительных действий не требуется.
+
+Проверка наличия Faker:
+    python3 -c "from faker import Faker"
+
+Если возникает ошибка ModuleNotFoundError, рекомендуется установить
+библиотеку через виртуальное окружение:
+
+    python3 -m venv venv
+    source venv/bin/activate
+    pip install Faker
+
+После установки необходимо запускать проект внутри активированного
+окружения (venv).
+
+Важно:
+Faker должен быть установлен в том же окружении Python, из которого
+запускается данный проект.
+"""
 
 DEFAULT_SENTENCE_ENDINGS = ".;?!"
-DEFAULT_VOWELS = set("aeiouyAEIOUY")
-FIXED_TEST_INPUTS: tuple[str, ...] = (
-    "Small fox runs. Brilliant minds grow fast! Tiny digits stay? Northern mountains shimmer brightly. ###",
-    "  One two three.\t\t444 mark here! Empty 1? ### trailing text is ignored.",
-    "Alpha beta gamma delta; Seven 77 seas? lone! ###",
-    "\t\tSingle. Double word! 12345 digits and numbers 7? ###",
-    "Keep calm and code. Remove every second word maybe! Echo echo echo? ###",
-)
-WORD_POOL: tuple[str, ...] = (
-    "alpha", "beta", "gamma", "delta", "omega", "vector", "matrix", "cipher",
-    "orbit", "signal", "planet", "rocket", "forest", "river", "silver", "bright",
-    "northern", "violet", "quantum", "whisper", "crystal", "autumn", "python", "kernel",
-)
-DIGIT_WORD_POOL: tuple[str, ...] = ("x1", "m2", "n33", "p444", "z5555", "a7b8")
+DEFAULT_VOWELS = set("aeiouAEIOU")
 
 
 @dataclass(frozen=True)
@@ -147,9 +172,9 @@ class Lab3Task(BaseTask):
             return self._variant
 
         rng = self.make_random()
-        select_kind = rng.choice(list(SelectRuleKind))
-        rewrite_kind = rng.choice(list(RewriteRuleKind))
-        keyword_kind = rng.choice(list(KeywordRuleKind))
+        select_kind = rand_choice(rng, list(SelectRuleKind))
+        rewrite_kind = rand_choice(rng, list(RewriteRuleKind))
+        keyword_kind = rand_choice(rng, list(KeywordRuleKind))
 
         self._variant = Variant(
             seed=self.seed,
@@ -190,25 +215,17 @@ class Lab3Task(BaseTask):
     def generate_tests(self) -> list[dict[str, Any]]:
         variant = self._build_variant()
         tests: list[dict[str, Any]] = []
-        for index, input_text in enumerate(FIXED_TEST_INPUTS[: self.tests_count], start=1):
+        rng = self.make_random("lab3-tests")
+        faker = build_faker(self.make_seed_hash("lab3-faker"))
+
+        for index in range(1, self.tests_count + 1):
+            input_text = generate_random_input(rng, self.limits, faker)
             tests.append(
                 {
                     "input_text": input_text,
                     "stdin": input_text,
                     "expected_stdout": solve_text(input_text, variant).render_output() + "\n",
-                    "test_id": f"fixed_{index}",
-                }
-            )
-        rng = self.make_random()
-        while len(tests) < self.tests_count:
-            input_text = generate_random_input(rng, self.limits)
-            test_index = len(tests) - len(FIXED_TEST_INPUTS) + 1
-            tests.append(
-                {
-                    "input_text": input_text,
-                    "stdin": input_text,
-                    "expected_stdout": solve_text(input_text, variant).render_output() + "\n",
-                    "test_id": f"random_{test_index}",
+                    "test_id": f"faker_{index}",
                 }
             )
 
@@ -276,20 +293,20 @@ def _generate_select_rule(kind: SelectRuleKind, rng: Any, limits: Limits) -> Sel
     if kind is SelectRuleKind.WORD_COUNT:
         return SelectRule(
             kind=kind,
-            comparison=rng.choice(tuple(COMPARISONS.keys())),
-            threshold=rng.randint(1, min(12, max(1, limits.word_max))),
+            comparison=rand_comparison(rng, tuple(COMPARISONS.keys())),
+            threshold=rand_int(rng, 1, min(12, max(1, limits.word_max))),
         )
     if kind is SelectRuleKind.ENDING_PUNCT:
-        endings = [symbol for symbol in limits.sentence_endings if rng.choice((True, False))]
+        endings = [symbol for symbol in limits.sentence_endings if rand_bool(rng)]
         if not endings:
-            endings = [rng.choice(tuple(limits.sentence_endings))]
+            endings = [rand_choice(rng, tuple(limits.sentence_endings))]
         return SelectRule(kind=kind, endings=tuple(sorted(endings)))
     if kind is SelectRuleKind.WORD_LENGTH:
-        return SelectRule(kind=kind, threshold=rng.randint(1, min(12, max(1, limits.word_max))))
+        return SelectRule(kind=kind, threshold=rand_int(rng, 1, min(12, max(1, limits.word_max))))
     if kind is SelectRuleKind.DIGIT_COUNT:
-        return SelectRule(kind=kind, threshold=rng.randint(1, 8))
+        return SelectRule(kind=kind, threshold=rand_int(rng, 1, 8))
     if kind is SelectRuleKind.POSITION:
-        return SelectRule(kind=kind, position_type=rng.choice(("even", "odd")))
+        return SelectRule(kind=kind, position_type=rand_position_type(rng))
     raise ValueError(f"Unsupported select rule kind: {kind}")
 
 
@@ -297,11 +314,11 @@ def _generate_rewrite_rule(kind: RewriteRuleKind, rng: Any) -> RewriteRule:
     if kind is RewriteRuleKind.REVERSE_WORDS:
         return RewriteRule(kind=kind)
     if kind is RewriteRuleKind.CYCLIC_SHIFT:
-        return RewriteRule(kind=kind, direction=rng.choice(("left", "right")), shift=rng.randint(1, 5))
+        return RewriteRule(kind=kind, direction=rand_direction(rng), shift=rand_int(rng, 1, 5))
     if kind is RewriteRuleKind.SWAP_FIRST_LAST:
         return RewriteRule(kind=kind)
     if kind is RewriteRuleKind.REMOVE_BY_POSITION:
-        return RewriteRule(kind=kind, position_type=rng.choice(("even", "odd")))
+        return RewriteRule(kind=kind, position_type=rand_position_type(rng))
     if kind is RewriteRuleKind.DUPLICATE_FIRST:
         return RewriteRule(kind=kind)
     raise ValueError(f"Unsupported rewrite rule kind: {kind}")
@@ -309,7 +326,7 @@ def _generate_rewrite_rule(kind: RewriteRuleKind, rng: Any) -> RewriteRule:
 
 def _generate_keyword_rule(kind: KeywordRuleKind, rng: Any) -> KeywordRule:
     if kind is KeywordRuleKind.BY_POSITION:
-        return KeywordRule(kind=kind, position=rng.randint(1, 5))
+        return KeywordRule(kind=kind, position=rand_int(rng, 1, 5))
     return KeywordRule(kind=kind)
 
 
@@ -496,19 +513,15 @@ def normalize_output(text: str) -> str:
     return "\n".join(lines)
 
 
-def generate_random_input(rng: Any, limits: Limits) -> str:
-    sentence_count = rng.randint(3, 7)
-    sentences: list[str] = []
-
-    for _ in range(sentence_count):
-        word_count = rng.randint(1, 7)
-        words: list[str] = []
-        for _ in range(word_count):
-            source = DIGIT_WORD_POOL if rng.random() < 0.25 else WORD_POOL
-            word = rng.choice(source)
-            words.append(word[: limits.word_max])
-        prefix = rng.choice(("", " ", "\t", " \t"))
-        ending = rng.choice(tuple(limits.sentence_endings))
-        sentences.append(prefix + " ".join(words) + ending)
-
-    return " ".join(sentences) + " ###"
+def generate_random_input(rng: Any, limits: Limits, faker: Any) -> str:
+    return faker_text(
+        rng,
+        faker=faker,
+        sentence_count_min=3,
+        sentence_count_max=7,
+        word_count_min=1,
+        word_count_max=7,
+        endings=tuple(limits.sentence_endings),
+        max_word_length=limits.word_max,
+        marker=limits.text_end_marker,
+    )
