@@ -176,12 +176,17 @@ class Lab3Task(BaseTask):
         rewrite_kind = rand_choice(rng, list(RewriteRuleKind))
         keyword_kind = rand_choice(rng, list(KeywordRuleKind))
 
+        select_rule = _generate_select_rule(select_kind, rng, self.limits)
+        rewrite_rule = _generate_rewrite_rule(rewrite_kind, rng)
+        keyword_rule = _generate_keyword_rule(keyword_kind, rng)
+        select_rule = _ensure_select_rule_has_positive_case(select_rule, rewrite_rule)
+
         self._variant = Variant(
             seed=self.seed,
             seed_hash=self.make_seed_hash(),
-            select_rule=_generate_select_rule(select_kind, rng, self.limits),
-            rewrite_rule=_generate_rewrite_rule(rewrite_kind, rng),
-            keyword_rule=_generate_keyword_rule(keyword_kind, rng),
+            select_rule=select_rule,
+            rewrite_rule=rewrite_rule,
+            keyword_rule=keyword_rule,
             limits=self.limits,
         )
         return self._variant
@@ -218,16 +223,17 @@ class Lab3Task(BaseTask):
         rng = self.make_random("lab3-tests")
         faker = build_faker(self.make_seed_hash("lab3-faker"))
 
-        for index in range(1, self.tests_count + 1):
-            input_text = generate_random_input(rng, self.limits, faker)
-            tests.append(
-                {
-                    "input_text": input_text,
-                    "stdin": input_text,
-                    "expected_stdout": solve_text(input_text, variant).render_output() + "\n",
-                    "test_id": f"faker_{index}",
-                }
+        tests.append(
+            _build_test_case(
+                variant,
+                f"{self.limits.text_end_marker}\n",
+                "empty_1",
+                expect_empty=True,
             )
+        )
+        for index in range(2, self.tests_count + 1):
+            input_text = generate_positive_input(variant, rng, faker, index=index)
+            tests.append(_build_test_case(variant, input_text, f"positive_{index}", expect_empty=False))
 
         return tests
 
@@ -308,6 +314,57 @@ def _generate_select_rule(kind: SelectRuleKind, rng: Any, limits: Limits) -> Sel
     if kind is SelectRuleKind.POSITION:
         return SelectRule(kind=kind, position_type=rand_position_type(rng))
     raise ValueError(f"Unsupported select rule kind: {kind}")
+
+
+def _minimum_word_count_surviving_rewrite(rule: RewriteRule) -> int:
+    if rule.kind is RewriteRuleKind.REMOVE_BY_POSITION and rule.position_type == "odd":
+        return 2
+    return 1
+
+
+def _word_count_survives_rewrite(word_count: int, rule: RewriteRule) -> bool:
+    return word_count >= _minimum_word_count_surviving_rewrite(rule)
+
+
+def _find_positive_word_count(rule: SelectRule, rewrite_rule: RewriteRule) -> int | None:
+    if rule.kind is not SelectRuleKind.WORD_COUNT:
+        return _minimum_word_count_surviving_rewrite(rewrite_rule)
+
+    threshold = int(rule.threshold or 1)
+    upper_bound = max(24, threshold + 10)
+    for word_count in range(1, upper_bound + 1):
+        if not COMPARISONS[str(rule.comparison)](word_count, threshold):
+            continue
+        if _word_count_survives_rewrite(word_count, rewrite_rule):
+            return word_count
+    return None
+
+
+def _ensure_select_rule_has_positive_case(
+    select_rule: SelectRule,
+    rewrite_rule: RewriteRule,
+) -> SelectRule:
+    if select_rule.kind is not SelectRuleKind.WORD_COUNT:
+        return select_rule
+    if _find_positive_word_count(select_rule, rewrite_rule) is not None:
+        return select_rule
+
+    minimum = _minimum_word_count_surviving_rewrite(rewrite_rule)
+    comparison = str(select_rule.comparison)
+    if comparison == "<":
+        threshold = minimum + 1
+    elif comparison == "<=":
+        threshold = minimum
+    elif comparison == "==":
+        threshold = minimum
+    else:
+        threshold = int(select_rule.threshold or minimum)
+
+    return SelectRule(
+        kind=select_rule.kind,
+        comparison=select_rule.comparison,
+        threshold=threshold,
+    )
 
 
 def _generate_rewrite_rule(kind: RewriteRuleKind, rng: Any) -> RewriteRule:
@@ -511,6 +568,118 @@ def normalize_output(text: str) -> str:
     while lines and lines[-1] == "":
         lines.pop()
     return "\n".join(lines)
+
+
+def _build_test_case(
+    variant: Variant,
+    input_text: str,
+    test_id: str,
+    *,
+    expect_empty: bool,
+) -> dict[str, Any]:
+    result = solve_text(input_text, variant)
+    rendered_output = result.render_output()
+    is_empty = not result.transformed_sentences
+    if is_empty != expect_empty:
+        expected_kind = "EMPTY" if expect_empty else "non-EMPTY"
+        actual_kind = "EMPTY" if is_empty else "non-EMPTY"
+        raise RuntimeError(
+            f"Generated lab3 test '{test_id}' is {actual_kind}, expected {expected_kind}."
+        )
+    return {
+        "input_text": input_text,
+        "stdin": input_text,
+        "expected_stdout": rendered_output + "\n",
+        "test_id": test_id,
+    }
+
+
+def _faker_words(rng: Any, faker: Any, count: int, max_length: int) -> list[str]:
+    raw_words = list(faker.words(nb=count))
+    words: list[str] = []
+    for index in range(count):
+        fallback = f"word{index + 1}{rand_int(rng, 10, 99)}"
+        word = str(raw_words[index]) if index < len(raw_words) else fallback
+        word = "".join(symbol for symbol in word if not symbol.isspace())
+        words.append((word or fallback)[:max_length])
+    return words
+
+
+def _positive_word_count(variant: Variant) -> int:
+    if variant.select_rule.kind is SelectRuleKind.WORD_COUNT:
+        word_count = _find_positive_word_count(variant.select_rule, variant.rewrite_rule)
+        if word_count is None:
+            raise RuntimeError(
+                f"Cannot generate a non-EMPTY test for select rule: {variant.select_rule}"
+            )
+        return word_count
+    return max(3, _minimum_word_count_surviving_rewrite(variant.rewrite_rule))
+
+
+def _word_count_for_digit_rule(variant: Variant, base_count: int) -> int:
+    if variant.select_rule.kind is not SelectRuleKind.DIGIT_COUNT:
+        return base_count
+    max_word_length = max(1, variant.limits.word_max)
+    required_digits = int(variant.select_rule.threshold or 1)
+    count = max(base_count, (required_digits + max_word_length - 1) // max_word_length)
+    while not _word_count_survives_rewrite(count, variant.rewrite_rule):
+        count += 1
+    return count
+
+
+def _apply_select_rule_payload(words: list[str], variant: Variant) -> None:
+    rule = variant.select_rule
+    max_word_length = max(1, variant.limits.word_max)
+
+    if rule.kind is SelectRuleKind.WORD_LENGTH:
+        threshold = int(rule.threshold or 1)
+        words[0] = "x" * threshold
+        return
+
+    if rule.kind is SelectRuleKind.DIGIT_COUNT:
+        required_digits = int(rule.threshold or 1)
+        remaining_digits = required_digits
+        for index in range(len(words)):
+            if remaining_digits <= 0:
+                break
+            digit_count = min(max_word_length, remaining_digits)
+            words[index] = "".join(str((index + offset) % 10) for offset in range(digit_count))
+            remaining_digits -= digit_count
+
+
+def _positive_sentence_ending(variant: Variant, rng: Any) -> str:
+    rule = variant.select_rule
+    if rule.kind is SelectRuleKind.ENDING_PUNCT:
+        return rand_choice(rng, tuple(rule.endings or tuple(variant.limits.sentence_endings)))
+    return rand_choice(rng, tuple(variant.limits.sentence_endings))
+
+
+def _render_generated_sentence(words: list[str], ending: str, rng: Any) -> str:
+    leading_whitespace = rand_choice(rng, ("", " ", "\t", " \t"))
+    return f"{leading_whitespace}{' '.join(words)}{ending}"
+
+
+def _build_positive_sentence(variant: Variant, rng: Any, faker: Any) -> str:
+    word_count = _word_count_for_digit_rule(variant, _positive_word_count(variant))
+    max_word_length = max(1, variant.limits.word_max)
+    words = _faker_words(rng, faker, word_count, max_word_length)
+    _apply_select_rule_payload(words, variant)
+    return _render_generated_sentence(words, _positive_sentence_ending(variant, rng), rng)
+
+
+def generate_positive_input(variant: Variant, rng: Any, faker: Any, *, index: int) -> str:
+    sentences: list[str] = []
+    if variant.select_rule.kind is SelectRuleKind.POSITION and variant.select_rule.position_type == "even":
+        noise_words = _faker_words(rng, faker, 3, max(1, variant.limits.word_max))
+        noise_ending = rand_choice(rng, tuple(variant.limits.sentence_endings))
+        sentences.append(_render_generated_sentence(noise_words, noise_ending, rng))
+
+    sentences.append(_build_positive_sentence(variant, rng, faker))
+
+    if index % 3 == 0 and variant.select_rule.kind is not SelectRuleKind.POSITION:
+        sentences.append(_build_positive_sentence(variant, rng, faker))
+
+    return f"{' '.join(sentences)} {variant.limits.text_end_marker}"
 
 
 def generate_random_input(rng: Any, limits: Limits, faker: Any) -> str:
