@@ -23,19 +23,19 @@ python main.py lab1 -h
 ```
 - сгенерировать вариант ЛР1:
 ```bash
-python main.py lab1 --student Басыров --mode=init
+python main.py lab1 --seed Басыров --mode=init
 ```
 - сгенерировать вариант ЛР2:
 ```bash
-python main.py lab2 --student Басыров --mode=init
+python main.py lab2 --seed Басыров --mode=init
 ```
 - сгенерировать вариант ЛР3:
 ```bash
-python main.py lab3 --student Басыров --mode=init
+python main.py lab3 --seed Басыров --mode=init
 ```
 - проверить решение ЛР1:
 ```bash
-python main.py lab1 --student Басыров --mode=check --solution=./examples/lab1_solution_good.c
+python main.py lab1 --seed Басыров --mode=check --solution=./examples/lab1_solution_good.c
 ```
 
 ## Проверка работоспособности
@@ -43,10 +43,10 @@ python main.py lab1 --student Басыров --mode=check --solution=./examples/
 
 ```bash
 python main.py -h
-python main.py lab1 --student Басыров --mode=init
-python main.py lab1 --student Басыров --mode=check --solution=./examples/lab1_solution_good.c
-python main.py lab2 --student Басыров --mode=init
-python main.py lab3 --student Басыров --mode=init
+python main.py lab1 --seed Басыров --mode=init
+python main.py lab1 --seed Басыров --mode=check --solution=./examples/lab1_solution_good.c
+python main.py lab2 --seed Басыров --mode=init
+python main.py lab3 --seed Басыров --mode=init
 ```
 
 Ожидаемый результат:
