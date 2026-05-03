@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 import os
+import re
+import shutil
 import subprocess
+import tempfile
+from subprocess import TimeoutExpired
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
@@ -9,6 +13,91 @@ from typing import Any, Dict, List, Tuple
 
 from prog_labgen.base_module import BaseTask
 
+
+HEADER_RE = re.compile(r"^###\s*(.*?)\s*###\s*$")
+LEGACY_HEADER_RE = re.compile(r"^###\s+(.*?)\s*$")
+
+
+def parse_student_solution_blob(text: str) -> List[Tuple[str, str]]:
+    if not text.strip():
+        return []
+
+    result: List[Tuple[str, str]] = []
+    current_name: str | None = None
+    current_lines: List[str] = []
+
+    for raw_line in text.splitlines():
+        header_match = HEADER_RE.match(raw_line)
+        legacy_match = LEGACY_HEADER_RE.match(raw_line) if header_match is None else None
+
+        if header_match or legacy_match:
+            if current_name is not None:
+                result.append((current_name, "\n".join(current_lines)))
+            current_name = (header_match or legacy_match).group(1).strip()
+            current_lines = []
+            continue
+
+        if current_name is not None:
+            current_lines.append(raw_line)
+
+    if current_name is not None:
+        result.append((current_name, "\n".join(current_lines)))
+
+    return result
+
+
+def write_solution_to_dir(entries: List[Tuple[str, str]], target_dir: Path) -> None:
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    for name, content in entries:
+        clean_name = name.strip()
+        if not clean_name:
+            continue
+
+        filepath = target_dir / clean_name
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        filepath.write_text(content, encoding="utf-8", errors="replace")
+
+
+def check_from_text_blob(
+    blob_text: str,
+    nmax: int | None = None,
+    k: int | None = None,
+    Nmax: int | None = None,
+    K: int | None = None,
+    student: str = "ab12",
+    fail_on_first_test: bool = True,
+    keep_temp: bool = False,
+) -> None:
+    resolved_nmax = 100 if nmax is None and Nmax is None else (nmax if nmax is not None else Nmax)
+    resolved_k = 3 if k is None and K is None else (k if k is not None else K)
+
+    entries = parse_student_solution_blob(blob_text)
+
+    if keep_temp:
+        debug_dir = Path.cwd() / "debug_student_solution"
+        if debug_dir.exists():
+            shutil.rmtree(debug_dir)
+    else:
+        debug_dir = Path(tempfile.mkdtemp(prefix="lab2_check_"))
+
+    debug_dir.mkdir(exist_ok=True, parents=True)
+    write_solution_to_dir(entries, debug_dir)
+
+    try:
+        task = Lab2Task(
+            student=student,
+            nmax=resolved_nmax,
+            k=resolved_k,
+            fail_on_first_test=fail_on_first_test,
+        )
+
+        ok, msg = task.check(solution_path=str(debug_dir))
+        print("OK" if ok else "FAIL")
+        print(msg)
+    finally:
+        if not keep_temp and debug_dir.exists():
+            shutil.rmtree(debug_dir)
 
 CORE_TYPES = [
     "reverse_subarray",
@@ -44,7 +133,7 @@ class StepFunctionSpec:
 
 @dataclass(frozen=True)
 class Variant:
-    seed: str
+    student: str
     seed_hash: int
     Nmax: int
     K: int
@@ -180,15 +269,36 @@ def _apply_inverse_deterministic_core(arr: List[int], spec: CoreFunctionSpec) ->
 class Lab2Task(BaseTask):
     def __init__(
         self,
-        seed: str,
-        Nmax: int = 100,
-        K: int = 3,
+        student: str,
+        nmax: int | None = None,
+        k: int | None = None,
+        Nmax: int | None = None,
+        K: int | None = None,
         **kwargs,
     ) -> None:
-        super().__init__(seed=seed, **kwargs)
-        self.Nmax = Nmax
-        self.K = K
+        resolved_nmax = 100 if nmax is None and Nmax is None else (nmax if nmax is not None else Nmax)
+        resolved_k = 3 if k is None and K is None else (k if k is not None else K)
+
+        self._validate_init_args(student=student, nmax=resolved_nmax, k=resolved_k)
+
+        super().__init__(student=student.strip(), **kwargs)
+        self.Nmax = int(resolved_nmax)
+        self.K = int(resolved_k)
         self._variant: Variant | None = None
+
+    @staticmethod
+    def _validate_init_args(student: str, nmax: int | None, k: int | None) -> None:
+        if not isinstance(student, str) or not student.strip():
+            raise ValueError("Параметр --student должен быть непустой строкой.")
+        for name, value in (("--n-max", nmax), ("--k", k)):
+            if not isinstance(value, int):
+                raise ValueError(f"Параметр {name} должен быть целым числом.")
+            if value <= 0:
+                raise ValueError(f"Параметр {name} должен быть положительным целым числом.")
+        if nmax > 100_000:
+            raise ValueError("Параметр --n-max слишком большой: допустимо не больше 100000.")
+        if k > 50:
+            raise ValueError("Параметр --k слишком большой: допустимо не больше 50.")
 
     def _build_variant(self) -> Variant:
         if self._variant is not None:
@@ -224,7 +334,7 @@ class Lab2Task(BaseTask):
             step_specs.append(StepFunctionSpec(name=step_name, module=module, calls=tuple(calls)))
 
         self._variant = Variant(
-            seed=self.seed,
+            student=self.student,
             seed_hash=self.make_seed_hash("lab2"),
             Nmax=self.Nmax,
             K=self.K,
@@ -242,7 +352,7 @@ class Lab2Task(BaseTask):
 
         lines = [
             "Вариант 2-й лабораторной",
-            f"Seed: {variant.seed}",
+            f"Студент: {variant.student}",
             f"Seed hash: {variant.seed_hash}",
             f"Nmax: {variant.Nmax}",
             f"K: {variant.K}",
@@ -427,23 +537,37 @@ class Lab2Task(BaseTask):
         if runtime_error:
             parts.append(f"Ошибка выполнения:\n{runtime_error}")
         return "\n".join(parts)
+
     def check(self, solution_path: str) -> tuple[bool, str]:
         variant = self._build_variant()
         build_dir = Path(solution_path)
+        if not build_dir.exists():
+            return False, f"Каталог с решением не найден: {solution_path}"
+        if not build_dir.is_dir():
+            return False, f"Путь к решению должен быть каталогом с Makefile: {solution_path}"
+        if not (build_dir / "Makefile").exists():
+            return False, f"В каталоге решения не найден обязательный файл Makefile: {build_dir}"
+
         core_map = {spec.name: spec for spec in variant.core_functions}
 
         env = os.environ.copy()
         if self.compiler:
             env["CC"] = self.compiler
 
-        make_result = subprocess.run(
-            ["make", "-C", str(build_dir), variant.executable],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            check=False,
-            env=env,
-        )
+        try:
+            make_result = subprocess.run(
+                ["make", "-C", str(build_dir), variant.executable],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+                env=env,
+                timeout=20,
+            )
+        except FileNotFoundError:
+            return False, "Команда make не найдена. Установите make или проверьте PATH."
+        except TimeoutExpired:
+            return False, "Сборка через Makefile превысила лимит времени."
         if make_result.returncode != 0:
             error_text = (make_result.stderr + make_result.stdout).strip()
             return False, f"Ошибка сборки через Makefile:\n{error_text}"
@@ -459,15 +583,30 @@ class Lab2Task(BaseTask):
         try:
             for test_index, test in enumerate(self.generate_tests(), start=1):
                 total += 1
-                proc = subprocess.run(
-                    [str(binary_path)],
-                    input=test["stdin"],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    encoding="utf-8",
-                    errors="replace",
-                )
+                try:
+                    proc = subprocess.run(
+                        [str(binary_path)],
+                        input=test["stdin"],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True,
+                        encoding="utf-8",
+                        errors="replace",
+                        timeout=5,
+                    )
+                except TimeoutExpired:
+                    messages.append(
+                        self._format_test_fail_message(
+                            test_index=test_index,
+                            test_id=test["id"],
+                            stdin_text=test["stdin"],
+                            expected_text=test["expected_stdout"],
+                            runtime_error="Программа превысила лимит времени выполнения.",
+                        )
+                    )
+                    if self.fail_on_first_test:
+                        break
+                    continue
 
                 if proc.returncode != 0:
                     runtime_error = proc.stderr.strip() or "Программа завершилась с ненулевым кодом без сообщения об ошибке."
@@ -477,7 +616,7 @@ class Lab2Task(BaseTask):
                             test_id=test["id"],
                             stdin_text=test["stdin"],
                             expected_text=test["expected_stdout"],
-                            actual_text=actual_text if 'actual_text' in locals() else (proc.stdout or "").replace("\r\n", "\n").replace("\r", "\n"),
+                            actual_text=(proc.stdout or "").replace("\r\n", "\n").replace("\r", "\n"),
                             runtime_error=runtime_error,
                         )
                     )
@@ -535,14 +674,18 @@ class Lab2Task(BaseTask):
                     if self.fail_on_first_test:
                         break
         finally:
-            subprocess.run(
-                ["make", "-C", str(build_dir), "clean"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                check=False,
-                env=env,
-            )
+            try:
+                subprocess.run(
+                    ["make", "-C", str(build_dir), "clean"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    check=False,
+                    env=env,
+                    timeout=10,
+                )
+            except (FileNotFoundError, TimeoutExpired):
+                pass
 
         ok = passed == total
         summary = f"Итог: {passed}/{total} тестов пройдено"
