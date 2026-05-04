@@ -309,6 +309,10 @@ class Lab4Task(BaseTask):
         return stdin_data, expected
 
     def check(self, solution_path: str) -> tuple[bool, str]:
+        is_stdlib_used, info = self._check_stdlib_usage(solution_path)
+        if (not is_stdlib_used):
+            return False, info
+
         binary_path, compile_error = self.compile_c_solution(
             solution_path,
             output_name="lab4_solution",
@@ -366,6 +370,27 @@ class Lab4Task(BaseTask):
         all_passed = passed_tests == total_tests
         footer = "Все тесты пройдены" if all_passed else "Есть ошибки"
         return all_passed, "\n".join(messages + [summary, footer])
+
+    def _check_stdlib_usage(self, solution_path: str) -> tuple[bool, str]:
+        allowed_required = [
+            "strtok",
+            "strcmp",
+            "qsort",
+            "bsearch",
+        ]
+
+        with open(solution_path, "r", encoding="utf-8") as f:
+            code = f.read()
+
+        missing = []
+        for req in allowed_required:
+            if req not in code:
+                missing.append(req)
+
+        if missing:
+            return False, f"Не используются требуемые функции stdlib: {missing}"
+
+        return True, ""
 
 
 def _describe_select_rule(variant: Variant) -> str:
