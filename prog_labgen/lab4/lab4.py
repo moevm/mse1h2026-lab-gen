@@ -519,20 +519,33 @@ class Lab4Task(BaseTask):
         return all_passed, "\n".join(messages + [summary, footer])
 
     def _check_stdlib_usage(self, solution_path: str) -> tuple[bool, str]:
-        allowed_required = [
+        # Функции, которые должны присутствовать обязательно
+        required = [
             "fgets",
             "strcmp",
             "qsort",
             "bsearch",
+        ]
+        
+        # Группы функций, где нужно использовать хотя бы одну из группы
+        alternative_groups = [
+            ["strcspn", "strpbrk"],  # хотя бы одна для поиска разделителей
         ]
 
         with open(solution_path, "r", encoding="utf-8") as f:
             code = f.read()
 
         missing = []
-        for req in allowed_required:
+        
+        # Проверяем обязательные функции
+        for req in required:
             if req not in code:
                 missing.append(req)
+        
+        # Проверяем альтернативные группы
+        for group in alternative_groups:
+            if not any(func in code for func in group):
+                missing.append(f"{' или '.join(group)}")
 
         if missing:
             return False, f"Не используются требуемые функции stdlib: {missing}"
