@@ -1,48 +1,23 @@
-## Установка и запуск
-Для запуска проекта нужно:
+# Отчетные материалы
 
-- собрать Docker-образ:
-```bash
-docker build -t my-app .
-```
-- запустить контейнер:
-```bash
-docker run --rm -it my-app
-```
-- внутри контейнера посмотреть доступные команды:
-```bash
-python main.py -h
-```
+В этом файле собраны ссылки на материалы проекта по итерациям. Основная инструкция по запуску и проверке проекта находится в [README.md](https://github.com/moevm/mse1h2026-lab-gen/blob/main/README.md).
 
-Примеры использования:
+## Итерация 1
 
-- показать параметры ЛР1:
-```bash
-python main.py lab1 -h
-```
-- сгенерировать вариант ЛР1:
-```bash
-python main.py lab1 --student Басыров --mode=init
-```
-- сгенерировать вариант ЛР2:
-```bash
-python main.py lab2 --student Басыров --mode=init
-```
-- сгенерировать вариант ЛР3:
-```bash
-python main.py lab3 --student Басыров --mode=init
-```
-- проверить решение ЛР1 на рабочем примере:
-```bash
-python main.py lab1 --student Басыров --mode=check --solution=./examples/lab1_solution_good.c
-```
+- [iteration_1.pdf](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/iteration_1.pdf) - презентация первой итерации;
+- [screencast.mp4](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/screencast.mp4) - скринкаст.
 
-## Итерация №2
-Материалы:
- - [specification.md](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/specification.md) - спецификация требований
- - [lab1_concept.md](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/lab1_concept.md) - концепция задачи для 1 лабораторной работы
- - [lab2_concept.md](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/lab2_concept.md) - концепция задачи для 2 лабораторной работы
- - [lab3_concept.md](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/lab3_concept.md) - концепция задачи для 3 лабораторной работы
- - [iteration_2.pdf](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/iteration_2.pdf) - презентация проекта
- - [screencast.mp4](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/screencast.mp4) - скринкаст
+## Итерация 2
 
+- [specification.md](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/specification.md) - спецификация требований;
+- [lab1_concept.md](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/lab1_concept.md) - концепция ЛР1;
+- [lab2_concept.md](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/lab2_concept.md) - концепция ЛР2;
+- [lab3_concept.md](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/lab3_concept.md) - концепция ЛР3;
+- [iteration_2.pdf](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/iteration_2.pdf) - презентация второй итерации.
+
+## Итерация 3
+
+- [Тестовый курс в Moodle](https://e.moevm.info/course/view.php?id=192) - интеграция ЛР1-ЛР4 в Moodle;
+- [lab4_concept.md](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/lab4_concept.md) - концепция ЛР4;
+- [iteration_3.pdf](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/iteration_3.pdf) - презентация третьей итерации;
+- [README.md](https://github.com/moevm/mse1h2026-lab-gen/blob/main/README.md) - инструкция по запуску, проверке и тестированию проекта.
