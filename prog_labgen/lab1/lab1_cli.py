@@ -7,8 +7,8 @@ from prog_labgen.base_module import (
     int_at_least,
 )
 
-from .lab1_intro import Lab1Task
-from .lab1_intro import TASKS
+from .lab1 import Lab1Task
+from .lab1 import TASKS
 
 
 def create_lab1_task(args: argparse.Namespace, parser: argparse.ArgumentParser) -> Lab1Task:
