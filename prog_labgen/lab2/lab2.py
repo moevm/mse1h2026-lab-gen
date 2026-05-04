@@ -65,7 +65,7 @@ def check_from_text_blob(
     k: int | None = None,
     Nmax: int | None = None,
     K: int | None = None,
-    student: str = "ab12",
+    seed: str = "ab12",
     fail_on_first_test: bool = True,
     keep_temp: bool = False,
 ) -> None:
@@ -86,7 +86,7 @@ def check_from_text_blob(
 
     try:
         task = Lab2Task(
-            student=student,
+            seed=seed,
             nmax=resolved_nmax,
             k=resolved_k,
             fail_on_first_test=fail_on_first_test,
@@ -133,7 +133,7 @@ class StepFunctionSpec:
 
 @dataclass(frozen=True)
 class Variant:
-    student: str
+    seed: str
     seed_hash: int
     Nmax: int
     K: int
@@ -269,7 +269,7 @@ def _apply_inverse_deterministic_core(arr: List[int], spec: CoreFunctionSpec) ->
 class Lab2Task(BaseTask):
     def __init__(
         self,
-        student: str,
+        seed: str,
         nmax: int | None = None,
         k: int | None = None,
         Nmax: int | None = None,
@@ -279,17 +279,17 @@ class Lab2Task(BaseTask):
         resolved_nmax = 100 if nmax is None and Nmax is None else (nmax if nmax is not None else Nmax)
         resolved_k = 3 if k is None and K is None else (k if k is not None else K)
 
-        self._validate_init_args(student=student, nmax=resolved_nmax, k=resolved_k)
+        self._validate_init_args(seed=seed, nmax=resolved_nmax, k=resolved_k)
 
-        super().__init__(student=student.strip(), **kwargs)
+        super().__init__(seed=seed.strip(), **kwargs)
         self.Nmax = int(resolved_nmax)
         self.K = int(resolved_k)
         self._variant: Variant | None = None
 
     @staticmethod
-    def _validate_init_args(student: str, nmax: int | None, k: int | None) -> None:
-        if not isinstance(student, str) or not student.strip():
-            raise ValueError("Параметр --student должен быть непустой строкой.")
+    def _validate_init_args(seed: str, nmax: int | None, k: int | None) -> None:
+        if not isinstance(seed, str) or not seed.strip():
+            raise ValueError("Параметр --seed должен быть непустой строкой.")
         for name, value in (("--n-max", nmax), ("--k", k)):
             if not isinstance(value, int):
                 raise ValueError(f"Параметр {name} должен быть целым числом.")
@@ -334,7 +334,7 @@ class Lab2Task(BaseTask):
             step_specs.append(StepFunctionSpec(name=step_name, module=module, calls=tuple(calls)))
 
         self._variant = Variant(
-            student=self.student,
+            seed=self.seed,
             seed_hash=self.make_seed_hash("lab2"),
             Nmax=self.Nmax,
             K=self.K,
@@ -352,7 +352,7 @@ class Lab2Task(BaseTask):
 
         lines = [
             "Вариант 2-й лабораторной",
-            f"Студент: {variant.student}",
+            f"Seed: {variant.seed}",
             f"Seed hash: {variant.seed_hash}",
             f"Nmax: {variant.Nmax}",
             f"K: {variant.K}",

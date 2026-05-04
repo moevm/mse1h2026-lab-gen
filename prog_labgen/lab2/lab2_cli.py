@@ -61,7 +61,7 @@ if __name__ == "__main__":
                 blob_text=blob,
                 nmax=args.n_max,
                 k=args.k,
-                student=args.student,
+                seed=args.seed,
                 fail_on_first_test=not args.all_tests,
                 keep_temp=args.keep_temp,
             )
