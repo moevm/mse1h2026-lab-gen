@@ -41,7 +41,7 @@ def add_lab4_cli_args(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument(
         "--tests-count",
-        type=int_at_least(1, "--tests-count"),
+        type=int_at_least(10, "--tests-count"),
         default=10,
         help="Количество генерируемых тестов.",
     )
