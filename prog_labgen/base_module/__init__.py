@@ -28,6 +28,7 @@ from .generators import (
     rand_sample,
     rand_suffix,
     render_sentence,
+    safe_faker_words,
     with_leading_whitespace,
 )
 from .base_task import BaseTask
@@ -63,6 +64,7 @@ __all__ = [
     "faker_words",
     "faker_sentence",
     "faker_text",
+    "safe_faker_words",
     "join_sentences",
     "render_sentence",
     "append_end_marker",

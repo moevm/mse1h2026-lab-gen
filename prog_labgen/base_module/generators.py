@@ -173,6 +173,23 @@ def faker_words(
     return [word[:max_length] for word in words]
 
 
+def safe_faker_words(
+    rng: random.Random,
+    *,
+    faker,
+    count: int,
+    max_length: int,
+) -> list[str]:
+    raw_words = list(faker.words(nb=count))
+    words: list[str] = []
+    for index in range(count):
+        fallback = f"word{index + 1}{rand_int(rng, 10, 99)}"
+        word = str(raw_words[index]) if index < len(raw_words) else fallback
+        word = "".join(symbol for symbol in word if not symbol.isspace())
+        words.append((word or fallback)[:max_length])
+    return words
+
+
 def faker_sentence(
     rng: random.Random,
     *,
