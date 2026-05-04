@@ -1,0 +1,172 @@
+###main_ab12.c###
+#include "data_io_q10.h"
+#include "step_k02.h"
+
+#define NMAX 100
+
+int main(void) {
+    int arr[NMAX];
+    int size = input_array(arr, NMAX);
+
+    step1(arr, size);
+    output_array(arr, size);
+
+    step2(arr, size);
+    output_array(arr, size);
+
+    step3(arr, size);
+    output_array(arr, size);
+
+    return 0;
+}
+
+###data_io_q10.h###
+#ifndef DATA_IO_Q10_H
+#define DATA_IO_Q10_H
+
+int input_array(int arr[], int max_size);
+void output_array(const int arr[], int size);
+
+#endif
+
+###data_io_q10.c###
+#include <stdio.h>
+#include "data_io_q10.h"
+
+int input_array(int arr[], int max_size) {
+    int size = 0;
+    while (size < max_size && scanf("%d", &arr[size]) == 1) {
+        size++;
+    }
+    return size;
+}
+
+void output_array(const int arr[], int size) {
+    for (int i = 0; i < size; ++i) {
+        if (i > 0) {
+            printf(" ");
+        }
+        printf("%d", arr[i]);
+    }
+    printf("\n");
+}
+
+###core_r21.h###
+#ifndef CORE_R21_H
+#define CORE_R21_H
+
+void interleave_ends(int arr[], int size);
+void reverse_subarray(int arr[], int size, int a, int b);
+void shift_left(int arr[], int size, int t);
+void swap_pairs(int arr[], int size);
+
+#endif
+
+###core_r21.c###
+#include "core_r21.h"
+
+void interleave_ends(int arr[], int size) {
+    int tmp[100]; // Nmax можно передать или объявить локально
+    int left = 0;
+    int right = size - 1;
+    int pos = 0;
+
+    while (left <= right) {
+        tmp[pos++] = arr[left];
+        if (left != right) {
+            tmp[pos++] = arr[right];
+        }
+        left++;
+        right--;
+    }
+
+    for (int i = 0; i < size; ++i) {
+        arr[i] = tmp[i];
+    }
+}
+
+void reverse_subarray(int arr[], int size, int a, int b) {
+    (void)size; // размер не используется в операции разворота
+    while (a < b) {
+        int tmp = arr[a];
+        arr[a] = arr[b];
+        arr[b] = tmp;
+        a++;
+        b--;
+    }
+}
+
+void shift_left(int arr[], int size, int t) {
+    if (size <= 1) return;
+    t = t % size;
+    for (int step = 0; step < t; ++step) {
+        int first = arr[0];
+        for (int i = 0; i + 1 < size; ++i) {
+            arr[i] = arr[i + 1];
+        }
+        arr[size - 1] = first;
+    }
+}
+
+void swap_pairs(int arr[], int size) {
+    for (int i = 0; i + 1 < size; i += 2) {
+        int tmp = arr[i];
+        arr[i] = arr[i + 1];
+        arr[i + 1] = tmp;
+    }
+}
+
+###step_k02.h###
+#ifndef STEP_K02_H
+#define STEP_K02_H
+
+void step1(int arr[], int size);
+void step2(int arr[], int size);
+void step3(int arr[], int size);
+
+#endif
+
+###step_k02.c###
+#include "core_r21.h"
+#include "step_k02.h"
+
+void step1(int arr[], int size) {
+    interleave_ends(arr, size);
+    reverse_subarray(arr, size, 1, 1);
+    reverse_subarray(arr, size, 1, 1);
+}
+
+void step2(int arr[], int size) {
+    shift_left(arr, size, 1);
+    shift_left(arr, size, 1);
+}
+
+void step3(int arr[], int size) {
+    shift_left(arr, size, 1);
+    swap_pairs(arr, size);
+    swap_pairs(arr, size);
+}
+
+###Makefile###
+CC = gcc
+CFLAGS = -Wall -Wextra -std=c99
+TARGET = lab2_ab12
+OBJ = main_ab12.o data_io_q10.o core_r21.o step_k02.o
+
+$(TARGET): $(OBJ)
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJ)
+
+main_ab12.o: main_ab12.c data_io_q10.h step_k02.h
+	$(CC) $(CFLAGS) -c main_ab12.c
+
+data_io_q10.o: data_io_q10.c data_io_q10.h
+	$(CC) $(CFLAGS) -c data_io_q10.c
+
+core_r21.o: core_r21.c core_r21.h
+	$(CC) $(CFLAGS) -c core_r21.c
+
+step_k02.o: step_k02.c step_k02.h core_r21.h
+	$(CC) $(CFLAGS) -c step_k02.c
+
+clean:
+	rm -f *.o $(TARGET)
