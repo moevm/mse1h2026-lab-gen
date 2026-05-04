@@ -66,7 +66,7 @@ void swap_pairs(int arr[], int size);
 #include "core_r21.h"
 
 void interleave_ends(int arr[], int size) {
-    int tmp[100]; // Nmax можно передать или объявить локально
+    int tmp[100];
     int left = 0;
     int right = size - 1;
     int pos = 0;
@@ -86,7 +86,7 @@ void interleave_ends(int arr[], int size) {
 }
 
 void reverse_subarray(int arr[], int size, int a, int b) {
-    (void)size; // размер не используется в операции разворота
+    (void)size;
     while (a < b) {
         int tmp = arr[a];
         arr[a] = arr[b];
