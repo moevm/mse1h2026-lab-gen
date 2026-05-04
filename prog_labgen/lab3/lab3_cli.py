@@ -1,6 +1,11 @@
 import argparse
 
-from prog_labgen.base_module import CLIParser, add_common_cli_args, get_common_cli_args
+from prog_labgen.base_module import (
+    CLIParser,
+    add_common_cli_args,
+    get_common_cli_args,
+    int_at_least,
+)
 
 from .lab3 import Lab3Task
 
@@ -17,10 +22,10 @@ def create_lab3_task(args: argparse.Namespace) -> Lab3Task:
 
 def add_lab3_cli_args(parser: argparse.ArgumentParser) -> None:
     add_common_cli_args(parser)
-    parser.add_argument("--text-max", type=int, default=10_000)
-    parser.add_argument("--sentence-max", type=int, default=200)
-    parser.add_argument("--word-max", type=int, default=64)
-    parser.add_argument("--tests-count", type=int, default=10)
+    parser.add_argument("--text-max", type=int_at_least(10, "--text-max"), default=10_000)
+    parser.add_argument("--sentence-max", type=int_at_least(1, "--sentence-max"), default=200)
+    parser.add_argument("--word-max", type=int_at_least(3, "--word-max"), default=64)
+    parser.add_argument("--tests-count", type=int_at_least(1, "--tests-count"), default=10)
     parser.set_defaults(func=create_lab3_task)
 
 
