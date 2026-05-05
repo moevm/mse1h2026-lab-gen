@@ -144,7 +144,16 @@ int main() {
                 }
                 keywords = new_keywords;
             }
-            keywords[keyword_count++] = words[word_count - KEYWORD_POS];
+            keywords[keyword_count] = strdup(words[word_count - KEYWORD_POS]);
+            if (keywords[keyword_count] == NULL) {
+                fprintf(stderr, "Ошибка выделения памяти\n");
+                free(words);
+                free(sentence);
+                free(keywords);
+                free(text);
+                return 1;
+            }
+            keyword_count++;
             printed = 1;
         }
 
@@ -165,6 +174,9 @@ int main() {
     }
 
     // Освобождаем память
+    for (int i = 0; i < keyword_count; i++) {
+        free(keywords[i]);
+    }
     free(keywords);
     free(text);
 

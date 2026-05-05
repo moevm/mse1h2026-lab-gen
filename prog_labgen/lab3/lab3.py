@@ -15,35 +15,8 @@ from prog_labgen.base_module import (
     rand_direction,
     rand_int,
     rand_position_type,
+    safe_faker_words,
 )
-
-"""
-Использование внешних зависимостей
-----------------------------------
-
-Для генерации тестовых данных в данной лабораторной работе используется
-библиотека Faker.
-
-Если библиотека уже установлена в используемом Python-окружении,
-дополнительных действий не требуется.
-
-Проверка наличия Faker:
-    python3 -c "from faker import Faker"
-
-Если возникает ошибка ModuleNotFoundError, рекомендуется установить
-библиотеку через виртуальное окружение:
-
-    python3 -m venv venv
-    source venv/bin/activate
-    pip install Faker
-
-После установки необходимо запускать проект внутри активированного
-окружения (venv).
-
-Важно:
-Faker должен быть установлен в том же окружении Python, из которого
-запускается данный проект.
-"""
 
 DEFAULT_SENTENCE_ENDINGS = ".;?!"
 DEFAULT_VOWELS = set("aeiouAEIOU")
@@ -594,17 +567,6 @@ def _build_test_case(
     }
 
 
-def _faker_words(rng: Any, faker: Any, count: int, max_length: int) -> list[str]:
-    raw_words = list(faker.words(nb=count))
-    words: list[str] = []
-    for index in range(count):
-        fallback = f"word{index + 1}{rand_int(rng, 10, 99)}"
-        word = str(raw_words[index]) if index < len(raw_words) else fallback
-        word = "".join(symbol for symbol in word if not symbol.isspace())
-        words.append((word or fallback)[:max_length])
-    return words
-
-
 def _positive_word_count(variant: Variant) -> int:
     if variant.select_rule.kind is SelectRuleKind.WORD_COUNT:
         word_count = _find_positive_word_count(variant.select_rule, variant.rewrite_rule)
@@ -662,7 +624,7 @@ def _render_generated_sentence(words: list[str], ending: str, rng: Any) -> str:
 def _build_positive_sentence(variant: Variant, rng: Any, faker: Any) -> str:
     word_count = _word_count_for_digit_rule(variant, _positive_word_count(variant))
     max_word_length = max(1, variant.limits.word_max)
-    words = _faker_words(rng, faker, word_count, max_word_length)
+    words = safe_faker_words(rng, faker=faker, count=word_count, max_length=max_word_length)
     _apply_select_rule_payload(words, variant)
     return _render_generated_sentence(words, _positive_sentence_ending(variant, rng), rng)
 
@@ -670,7 +632,7 @@ def _build_positive_sentence(variant: Variant, rng: Any, faker: Any) -> str:
 def generate_positive_input(variant: Variant, rng: Any, faker: Any, *, index: int) -> str:
     sentences: list[str] = []
     if variant.select_rule.kind is SelectRuleKind.POSITION and variant.select_rule.position_type == "even":
-        noise_words = _faker_words(rng, faker, 3, max(1, variant.limits.word_max))
+        noise_words = safe_faker_words(rng, faker=faker, count=3, max_length=max(1, variant.limits.word_max))
         noise_ending = rand_choice(rng, tuple(variant.limits.sentence_endings))
         sentences.append(_render_generated_sentence(noise_words, noise_ending, rng))
 

@@ -27,14 +27,14 @@ CASES: tuple[ExampleCase, ...] = (
     ExampleCase(
         label="lab1 good",
         lab="lab1",
-        seed="example-lab1",
+        seed="Басыров",
         solution_path=ROOT / "examples" / "lab1_solution_good.c",
         expected_pass=True,
     ),
     ExampleCase(
         label="lab1 bad",
         lab="lab1",
-        seed="example-lab1",
+        seed="Басыров",
         solution_path=ROOT / "examples" / "lab1_solution_bad.c",
         expected_pass=False,
     ),
@@ -68,6 +68,20 @@ CASES: tuple[ExampleCase, ...] = (
         solution_path=ROOT / "examples" / "lab3_solution_bad.c",
         expected_pass=False,
     ),
+    ExampleCase(
+        label="lab4 good",
+        lab="lab4",
+        seed="2",
+        solution_path=ROOT / "examples" / "lab4_solution_good.c",
+        expected_pass=True,
+    ),
+    ExampleCase(
+        label="lab4 bad",
+        lab="lab4",
+        seed="2",
+        solution_path=ROOT / "examples" / "lab4_solution_bad.c",
+        expected_pass=False,
+    ),
 )
 
 
@@ -76,11 +90,13 @@ def build_command(case: ExampleCase) -> list[str]:
         return [
             sys.executable,
             "-m",
-            "prog_labgen.lab2.lab2_check_text",
+            "prog_labgen.lab2.lab2_cli",
             "--blob-file",
             str(case.solution_path),
             "--seed",
             case.seed,
+            "--mode",
+            "check",
         ]
 
     command = [

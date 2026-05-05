@@ -1,6 +1,8 @@
-###main_ab12.c###
-#include "data_io_q10.h"
-#include "step_k02.h"
+###main_h4tx.c###
+#include "data_io_axj.h"
+#include "step_ftm.h"
+#include "step_rdm.h"
+#include "step_bn6.h"
 
 #define NMAX 100
 
@@ -8,30 +10,30 @@ int main(void) {
     int arr[NMAX];
     int size = input_array(arr, NMAX);
 
-    step1(arr, size);
+    sf_jra(arr, size);
     output_array(arr, size);
 
-    step2(arr, size);
+    sf_7of(arr, size);
     output_array(arr, size);
 
-    step3(arr, size);
+    sf_73g(arr, size);
     output_array(arr, size);
 
     return 0;
 }
 
-###data_io_q10.h###
-#ifndef DATA_IO_Q10_H
-#define DATA_IO_Q10_H
+###data_io_axj.h###
+#ifndef DATA_IO_AXJ_H
+#define DATA_IO_AXJ_H
 
 int input_array(int arr[], int max_size);
 void output_array(const int arr[], int size);
 
 #endif
 
-###data_io_q10.c###
+###data_io_axj.c###
 #include <stdio.h>
-#include "data_io_q10.h"
+#include "data_io_axj.h"
 
 int input_array(int arr[], int max_size) {
     int size = 0;
@@ -51,21 +53,21 @@ void output_array(const int arr[], int size) {
     printf("\n");
 }
 
-###core_r21.h###
-#ifndef CORE_R21_H
-#define CORE_R21_H
+###core_71j.h###
+#ifndef CORE_71J_H
+#define CORE_71J_H
 
-void interleave_ends(int arr[], int size);
-void reverse_subarray(int arr[], int size, int a, int b);
-void shift_left(int arr[], int size, int t);
-void swap_pairs(int arr[], int size);
+void cf_6gg(int arr[], int size);
+void cf_sr3(int arr[], int size);
+void cf_73k(int arr[], int size);
+void cf_dua(int arr[], int size);
 
 #endif
 
-###core_r21.c###
-#include "core_r21.h"
+###core_71j.c###
+#include "core_71j.h"
 
-void interleave_ends(int arr[], int size) {
+void cf_6gg(int arr[], int size) {
     int tmp[100];
     int left = 0;
     int right = size - 1;
@@ -85,88 +87,135 @@ void interleave_ends(int arr[], int size) {
     }
 }
 
-void reverse_subarray(int arr[], int size, int a, int b) {
-    (void)size;
-    while (a < b) {
-        int tmp = arr[a];
-        arr[a] = arr[b];
-        arr[b] = tmp;
-        a++;
-        b--;
+void cf_sr3(int arr[], int size) {
+    int left = 3;
+    int right = 5;
+    if (size <= 0 || left >= size) {
+        return;
+    }
+    if (right >= size) {
+        right = size - 1;
+    }
+    while (left < right) {
+        int tmp = arr[left];
+        arr[left] = arr[right];
+        arr[right] = tmp;
+        left++;
+        right--;
     }
 }
 
-void shift_left(int arr[], int size, int t) {
-    if (size <= 1) return;
-    t = t % size;
-    for (int step = 0; step < t; ++step) {
-        int first = arr[0];
-        for (int i = 0; i + 1 < size; ++i) {
-            arr[i] = arr[i + 1];
+void cf_73k(int arr[], int size) {
+    int tmp[100];
+    int pos = 0;
+
+    for (int i = 0; i < size; ++i) {
+        if (arr[i] % 2 == 0) {
+            tmp[pos++] = arr[i];
         }
-        arr[size - 1] = first;
+    }
+    for (int i = 0; i < size; ++i) {
+        if (arr[i] % 2 != 0) {
+            tmp[pos++] = arr[i];
+        }
+    }
+    for (int i = 0; i < size; ++i) {
+        arr[i] = tmp[i];
     }
 }
 
-void swap_pairs(int arr[], int size) {
-    for (int i = 0; i + 1 < size; i += 2) {
-        int tmp = arr[i];
-        arr[i] = arr[i + 1];
-        arr[i + 1] = tmp;
+void cf_dua(int arr[], int size) {
+    if (size <= 0) {
+        return;
+    }
+
+    int tmp[100];
+    int shift = 5 % size;
+    for (int i = 0; i < size; ++i) {
+        tmp[i] = arr[(i + shift) % size];
+    }
+    for (int i = 0; i < size; ++i) {
+        arr[i] = tmp[i];
     }
 }
 
-###step_k02.h###
-#ifndef STEP_K02_H
-#define STEP_K02_H
+###step_ftm.h###
+#ifndef STEP_FTM_H
+#define STEP_FTM_H
 
-void step1(int arr[], int size);
-void step2(int arr[], int size);
-void step3(int arr[], int size);
+void sf_jra(int arr[], int size);
 
 #endif
 
-###step_k02.c###
-#include "core_r21.h"
-#include "step_k02.h"
+###step_ftm.c###
+#include "core_71j.h"
+#include "step_ftm.h"
 
-void step1(int arr[], int size) {
-    interleave_ends(arr, size);
-    reverse_subarray(arr, size, 1, 1);
-    reverse_subarray(arr, size, 1, 1);
+void sf_jra(int arr[], int size) {
+    cf_sr3(arr, size);
+    cf_6gg(arr, size);
 }
 
-void step2(int arr[], int size) {
-    shift_left(arr, size, 1);
-    shift_left(arr, size, 1);
+###step_rdm.h###
+#ifndef STEP_RDM_H
+#define STEP_RDM_H
+
+void sf_7of(int arr[], int size);
+
+#endif
+
+###step_rdm.c###
+#include "core_71j.h"
+#include "step_rdm.h"
+
+void sf_7of(int arr[], int size) {
+    cf_73k(arr, size);
 }
 
-void step3(int arr[], int size) {
-    shift_left(arr, size, 1);
-    swap_pairs(arr, size);
-    swap_pairs(arr, size);
+###step_bn6.h###
+#ifndef STEP_BN6_H
+#define STEP_BN6_H
+
+void sf_73g(int arr[], int size);
+
+#endif
+
+###step_bn6.c###
+#include "core_71j.h"
+#include "step_bn6.h"
+
+void sf_73g(int arr[], int size) {
+    cf_6gg(arr, size);
+    cf_dua(arr, size);
+    cf_73k(arr, size);
 }
 
 ###Makefile###
 CC = gcc
 CFLAGS = -Wall -Wextra -std=c99
-TARGET = lab2_ab12
-OBJ = main_ab12.o data_io_q10.o core_r21.o step_k02.o
+TARGET = lab2_qaw
+OBJ = main_h4tx.o data_io_axj.o core_71j.o step_ftm.o step_rdm.o step_bn6.o
 
 $(TARGET): $(OBJ)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJ)
 
-main_ab12.o: main_ab12.c data_io_q10.h step_k02.h
-	$(CC) $(CFLAGS) -c main_ab12.c
+main_h4tx.o: main_h4tx.c data_io_axj.h step_ftm.h step_rdm.h step_bn6.h
+	$(CC) $(CFLAGS) -c main_h4tx.c
 
-data_io_q10.o: data_io_q10.c data_io_q10.h
-	$(CC) $(CFLAGS) -c data_io_q10.c
+data_io_axj.o: data_io_axj.c data_io_axj.h
+	$(CC) $(CFLAGS) -c data_io_axj.c
 
-core_r21.o: core_r21.c core_r21.h
-	$(CC) $(CFLAGS) -c core_r21.c
+core_71j.o: core_71j.c core_71j.h
+	$(CC) $(CFLAGS) -c core_71j.c
 
-step_k02.o: step_k02.c step_k02.h core_r21.h
-	$(CC) $(CFLAGS) -c step_k02.c
+step_ftm.o: step_ftm.c step_ftm.h core_71j.h
+	$(CC) $(CFLAGS) -c step_ftm.c
+
+step_rdm.o: step_rdm.c step_rdm.h core_71j.h
+	$(CC) $(CFLAGS) -c step_rdm.c
+
+step_bn6.o: step_bn6.c step_bn6.h core_71j.h
+	$(CC) $(CFLAGS) -c step_bn6.c
 
 clean:
 	rm -f *.o $(TARGET)

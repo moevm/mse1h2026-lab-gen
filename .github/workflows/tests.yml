@@ -1,0 +1,22 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t mse-lab-gen-check .
+
+      - name: Run pytest
+        run: docker run --rm mse-lab-gen-check -lc "python -m pytest"
+
+      - name: Run example integration checks
+        run: docker run --rm mse-lab-gen-check -lc "python scripts/run_example_checks.py"
