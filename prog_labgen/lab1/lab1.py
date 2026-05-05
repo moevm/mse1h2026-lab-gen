@@ -127,6 +127,11 @@ class Lab1Task(BaseTask):
     def render_assignment(self) -> str:
         variant = self._build_variant()
         lines = [
+            "Концепция варианта ЛР1",
+            f"Seed: {variant['seed']}",
+            f"Seed hash: {variant['seed_hash']}",
+            f"Nmax: {variant['params']['N_max']}",
+            f"Кол-во подзадач: {variant['params']['K']}",
             "   Реализуйте программу, которая должна считать массив целых чисел и",
             "напечатать результаты выполнения назначенных подзадач по одному в строке.",
             "   Назначенные подзадачи:",
