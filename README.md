@@ -31,6 +31,29 @@ docker run --rm -it mse-lab-gen
 python main.py -h
 ```
 
+## Добавление в кафедральный Docker-образ
+
+Проект можно установить как Python-зависимость из GitHub без установки `git` в образ:
+
+```dockerfile
+RUN pip install https://github.com/moevm/mse1h2026-lab-gen/archive/refs/heads/main.zip
+```
+
+Если в образе уже есть `git`, можно использовать `git+https`:
+
+```dockerfile
+RUN pip install git+https://github.com/moevm/mse1h2026-lab-gen.git@main
+```
+
+После установки в образе будет доступна команда `labgen`:
+
+```bash
+labgen lab1 --seed Басыров --mode=init
+labgen lab4 --seed Басыров --mode=check --solution=solution.c
+```
+
+Обычный запуск из репозитория через `python main.py ...` также поддерживается.
+
 ## Примеры команд
 
 Показать параметры конкретной лабораторной:
