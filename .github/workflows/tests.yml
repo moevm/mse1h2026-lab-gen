@@ -1,11 +1,56 @@
-name: Tests
+name: CI
 
 on:
   push:
   pull_request:
 
 jobs:
-  test:
+  python-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install package with test dependencies
+        run: python -m pip install -e ".[test]"
+
+      - name: Run pytest
+        run: python -m pytest
+
+      - name: Run example integration checks
+        run: python scripts/run_example_checks.py
+
+      - name: Run small seed stress
+        run: python scripts/stress_generate_variants.py --count 25
+
+      - name: Check help for all labs
+        run: |
+          labgen lab1 -h
+          labgen lab2 -h
+          labgen lab3 -h
+          labgen lab4 -h
+          python main.py lab1 -h
+          python main.py lab2 -h
+          python main.py lab3 -h
+          python main.py lab4 -h
+
+      - name: Check installed CLI outside repository
+        run: |
+          cd /tmp
+          labgen --help
+          labgen lab1 --seed smoke-seed --mode=init
+          labgen lab4 --seed smoke-seed --mode=dry-run
+
+      - name: Check legacy CLI
+        run: python main.py lab1 --seed smoke-seed --mode=init
+
+  docker-checks:
     runs-on: ubuntu-latest
 
     steps:
@@ -15,8 +60,20 @@ jobs:
       - name: Build Docker image
         run: docker build -t mse-lab-gen-check .
 
-      - name: Run pytest
+      - name: Check package CLI in Docker
+        run: docker run --rm mse-lab-gen-check -lc "cd /tmp && labgen lab1 --seed smoke-seed --mode=init && labgen lab4 --seed smoke-seed --mode=dry-run"
+
+      - name: Check help for all labs in Docker
+        run: docker run --rm mse-lab-gen-check -lc "labgen lab1 -h && labgen lab2 -h && labgen lab3 -h && labgen lab4 -h && python main.py lab1 -h && python main.py lab2 -h && python main.py lab3 -h && python main.py lab4 -h"
+
+      - name: Check legacy CLI in Docker
+        run: docker run --rm mse-lab-gen-check -lc "python main.py lab1 --seed smoke-seed --mode=init"
+
+      - name: Run pytest in Docker
         run: docker run --rm mse-lab-gen-check -lc "python -m pytest"
 
-      - name: Run example integration checks
+      - name: Run example integration checks in Docker
         run: docker run --rm mse-lab-gen-check -lc "python scripts/run_example_checks.py"
+
+      - name: Run small seed stress in Docker
+        run: docker run --rm mse-lab-gen-check -lc "python scripts/stress_generate_variants.py --runner labgen --count 25"
