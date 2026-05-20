@@ -85,25 +85,82 @@ python main.py lab1 --seed Басыров --mode=check --solution=./examples/lab
 
 ## Тесты
 
-В проекте есть два уровня проверок:
+В проекте есть несколько уровней проверок:
 
 - `pytest` - функциональные smoke-тесты CLI и unit-тесты отдельных лабораторных;
 - `scripts/run_example_checks.py` - интеграционная проверка good/bad эталонных решений для ЛР1-ЛР4.
+- `scripts/stress_generate_variants.py` - массовая проверка генерации вариантов на наборе seed-ов.
 
 Запуск внутри Docker-контейнера:
 
 ```bash
 python -m pytest
 python scripts/run_example_checks.py
+python scripts/stress_generate_variants.py --count 25
 ```
 
 Запуск одной командой через Docker без ручного входа в контейнер:
 
 ```bash
-docker run --rm mse-lab-gen -lc "python -m pytest && python scripts/run_example_checks.py"
+docker run --rm mse-lab-gen -lc "python -m pytest && python scripts/run_example_checks.py && python scripts/stress_generate_variants.py --count 25"
 ```
 
-Эти же проверки запускаются в GitHub Actions при `push` и `pull_request`.
+### Stress-проверка генерации
+
+Stress-проверка нужна, чтобы будущие изменения не выдавали студентам сломанные варианты. Скрипт запускает `init` и `dry-run` для каждой лабораторной на фиксированных seed-ах из `scripts/seed_to_check.txt` и на синтетических seed-ах вида `ci-seed-0000`.
+
+Проверяется:
+
+- команда завершилась с кодом `0`;
+- вывод не пустой;
+- в выводе нет `Traceback`;
+- в выводе нет `None`, `TODO`, `<undefined>`;
+- повторный запуск с тем же seed дает тот же результат.
+- на наборе seed-ов для каждой лабораторной появляется больше одного варианта.
+- если `dry-run` выводит JSON, он должен быть валидным и содержать `assignment`;
+- если в JSON есть `tests`, каждый тест должен содержать входные данные и `expected_stdout`.
+
+Пример запуска:
+
+```bash
+python scripts/stress_generate_variants.py --labs lab1 lab2 lab3 lab4 --count 100
+```
+
+При ошибке скрипт печатает команду для воспроизведения:
+
+```text
+FAILED
+lab=lab3
+seed=ci-1842
+mode=dry-run
+
+Reproduce:
+python main.py lab3 --seed ci-1842 --mode=dry-run
+```
+
+### GitHub Actions
+
+В `.github/workflows/tests.yml` настроен быстрый CI для `push` и `pull_request`.
+
+Он проверяет:
+
+- установку проекта как пакета через `pip install -e ".[test]"`;
+- запуск установленной команды `labgen` из директории вне репозитория;
+- обратную совместимость `python main.py ...`;
+- `help` для всех лабораторных через `labgen` и `python main.py`;
+- `pytest`;
+- good/bad эталонные решения;
+- малый seed stress;
+- сборку Docker-образа;
+- запуск `labgen`, `python main.py`, `pytest`, good/bad checks и stress внутри Docker.
+
+В `.github/workflows/stress.yml` настроен тяжелый ручной stress-прогон:
+
+```bash
+python scripts/stress_generate_variants.py --runner labgen --count 1000
+```
+
+Он нужен для поиска редких падений генератора на большом количестве seed-ов и не блокирует каждый pull request.
 
 
 ## Документация
