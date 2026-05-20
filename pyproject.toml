@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mse-lab-gen"
+version = "0.1.0"
+description = "Generator and checker for programming laboratory works"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "Faker==40.15.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest==8.3.5",
+]
+
+[project.scripts]
+labgen = "prog_labgen.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["prog_labgen*"]
