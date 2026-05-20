@@ -1,0 +1,18 @@
+name: Manual Stress
+
+on:
+  workflow_dispatch:
+
+jobs:
+  seed-stress:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t mse-lab-gen-check .
+
+      - name: Run large seed stress
+        run: docker run --rm mse-lab-gen-check -lc "python scripts/stress_generate_variants.py --runner labgen --count 1000"
