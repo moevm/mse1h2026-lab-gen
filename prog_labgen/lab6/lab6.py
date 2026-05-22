@@ -189,6 +189,101 @@ def _list_type_assignment_text(list_type: int) -> list[str]:
     ]
 
 
+def _standard_functions_assignment_text() -> list[str]:
+    return [
+        "Структуры объявлять не нужно! Они уже есть в проверяющем коде.",
+        "Функцию main писать не нужно. Программа должна содержать только реализации требуемых функций.",
+        "",
+        "Необходимо реализовать следующий стандартный API для взаимодействия со списком:",
+        "",
+        "struct ListStruct *list_init();",
+        "Создаёт новый список и возвращает указатель на него. Список должен быть пустым.",
+        "",
+        "void list_destroy(struct ListStruct *list);",
+        "Очищает список list, освобождает память всех его элементов и память самой структуры списка.",
+        "",
+        "void list_push_front(struct ListStruct *list, int data);",
+        "Добавляет новый элемент в начало списка.",
+        "list -- список, в который необходимо добавить элемент.",
+        "data -- данные, которые нужно добавить.",
+        "",
+        "void list_push_back(struct ListStruct *list, int data);",
+        "Добавляет новый элемент в конец списка.",
+        "list -- список, в который необходимо добавить элемент.",
+        "data -- данные, которые нужно добавить.",
+        "",
+        "void list_pop(struct ListStruct *list, struct ListNode *node_to_remove);",
+        "Удаляет элемент из списка.",
+        "list -- список, из которого необходимо удалить элемент.",
+        "node_to_remove -- указатель на элемент, который необходимо удалить.",
+        "Если node_to_remove равняется NULL, список не изменяется.",
+        "",
+        "int list_count(struct ListStruct *list);",
+        "Подсчитывает количество логических элементов в списке.",
+        "list -- список, для которого необходимо посчитать количество элементов.",
+        "",
+        "struct ListNode *list_get_head(struct ListStruct *list);",
+        "Возвращает указатель на первый физический узел списка.",
+        "Если список пуст, возвращает NULL.",
+        "",
+        "struct ListNode *list_get_tail(struct ListStruct *list);",
+        "Возвращает указатель на последний физический узел списка.",
+        "Если список пуст, возвращает NULL.",
+        "",
+        "struct ListNode *list_get(struct ListStruct *list, int index);",
+        "Возвращает указатель на элемент с индексом index.",
+        "Индексация начинается с 0.",
+        "Если index выходит за границы списка, возвращает NULL.",
+        "Для развёрнутого списка возвращает указатель на блок, в котором находится логический элемент с заданным индексом.",
+        "",
+        "bool list_is_empty(struct ListStruct *list);",
+        "Возвращает true, если список пуст, иначе возвращает false.",
+        "",
+        "void list_sort(struct ListStruct *list);",
+        "Сортирует логические элементы списка по возрастанию значения data.",
+        "Структура списка после сортировки должна оставаться корректной для выбранного типа списка.",
+    ]
+
+
+def _insert_assignment_text(list_type: int, insert_mode: int) -> list[str]:
+    if list_type == 2:
+        return [
+            "Дополнительно необходимо реализовать функцию вставки для развёрнутого списка:",
+            "",
+            "void list_insert_at(struct ListStruct *list, int index, int data);",
+            "Вставляет новый логический элемент со значением data по индексу index.",
+            "Если index <= 0, элемент вставляется в начало.",
+            "Если index >= list_count(list), элемент вставляется в конец.",
+            "При вставке нужно поддерживать корректные значения count в блоках.",
+        ]
+    if insert_mode == 0:
+        return [
+            "Дополнительно необходимо реализовать функцию вставки:",
+            "",
+            "void list_insert_before(struct ListStruct *list, struct ListNode *node, int data);",
+            "Вставляет новый элемент со значением data перед узлом node.",
+            "list -- список, в который необходимо добавить элемент.",
+            "node -- узел, перед которым нужно вставить новый элемент.",
+            "data -- данные, которые нужно добавить.",
+            "Если node равняется NULL, элемент необходимо добавить в конец списка.",
+        ]
+    return [
+        "Дополнительно необходимо реализовать функцию вставки:",
+        "",
+        "void list_insert_after(struct ListStruct *list, struct ListNode *node, int data);",
+        "Вставляет новый элемент со значением data после узла node.",
+        "list -- список, в который необходимо добавить элемент.",
+        "node -- узел, после которого нужно вставить новый элемент.",
+        "data -- данные, которые нужно добавить.",
+        "Если node равняется NULL, элемент необходимо добавить в начало списка.",
+    ]
+
+
+def _format_core_params(spec: CoreSpec, params: dict[str, int]) -> str:
+    return ", ".join(f"{name} = {params[name]}" for name in spec.params)
+
+
+
 
 class Lab6Task(BaseTask):
     def __init__(self, seed: str, tests_count: int = 5, fail_on_first_test: bool = True, compiler: str | None = None) -> None:
