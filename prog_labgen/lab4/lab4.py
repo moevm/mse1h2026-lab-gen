@@ -589,10 +589,10 @@ def _describe_summary_rule(variant: Variant) -> str:
 
 def _describe_summary_format(variant: Variant) -> str:
     if variant.summary_rule == "count":
-        return "summary: count=<число>"
+        return "summary: count=<число> (если элементов нет, вывести count=0)"
     if variant.summary_rule == "maxlen":
-        return "summary: maxlen=<число>"
+        return "summary: maxlen=<число> (если элементов нет, вывести maxlen=0)"
     if variant.summary_rule == "minlen":
-        return "summary: minlen=<число>"
+        return "summary: minlen=<число> (если элементов нет, вывести minlen=0)"
     if variant.summary_rule == "first_last":
-        return "summary: first=<элемент> last=<элемент>"
+        return "summary: first=<элемент> last=<элемент> (если элементов нет, вывести first= last=)"
