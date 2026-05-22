@@ -212,7 +212,8 @@ class Lab4Task(BaseTask):
             "На вход программе подаются:",
             "- строка с элементами",
             "- строка-запрос",
-            "В случае отсутсвия во вводе какой-либо строки, она считается пустой.",
+            "если во вводе нет ни одной строки, то обе строки (и элементы, и запрос) считаются пустыми.",
+            "eсли есть только первая строка, то строка-запрос считается пустой.",
             "",
             "Общие требования:",
             "- считать строку элементов и строку-запрос через fgets",
@@ -416,7 +417,7 @@ class Lab4Task(BaseTask):
             elif kind == "mixed":
                 pool = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
                 chars = [rng.choice(pool) for _ in range(length)]
-            else:  # rule_specific — генерируем так, чтобы иногда подходило под правило
+            else:
                 if variant.select_rule == "digits":
                     chars = [rng.choice("0123456789") for _ in range(length)]
                 elif variant.select_rule == "alpha":
