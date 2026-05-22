@@ -204,14 +204,17 @@ class Lab4Task(BaseTask):
             "Лабораторная работа 4",
             f"Seed: {v.seed}",
             f"Seed hash: {v.seed_hash}",
-            f"LineMax: {v.limits.line_max}",
-            f"ElementMax: {v.limits.element_max}",
-            f"WordMax: {v.limits.word_max}",
+            f"- Максимальная длина входной строки (LineMax): {v.limits.line_max}",
+            f"- Максимальное количество элементов (ElementMax): {v.limits.element_max}",
+            f"- Максимальная длина одного элемента (WordMax): {v.limits.word_max}",
             "Напишите программу на языке Си, которая читает строку элементов, ",
             "обрабатывает её и выводит результат, используя функции стандартной библиотеки.",
             "На вход программе подаются:",
             "- строка с элементами",
             "- строка-запрос",
+            "если во вводе нет ни одной строки, то обе строки (и элементы, и запрос) считаются пустыми.",
+            "eсли есть только первая строка, то строка-запрос считается пустой.",
+            "",
             "Общие требования:",
             "- считать строку элементов и строку-запрос через fgets",
             "- разделить строку на элементы по следующим разделителям",
@@ -225,11 +228,13 @@ class Lab4Task(BaseTask):
             f"- если образовались одинаковые элементы, то нужно оставить {'все' if v.allow_duplicates else 'только один'} из них",
             "- определить наличие строки-запроса среди выбранных элементов через bsearch,",
             "используя strcmp для сравнения элементов",
-            "В качестве ответа нужно вывести:",
+            "",
+            "В качестве ответа нужно вывести (каждый пункт с новой строки):",
             "- полученные после обработки элементы в одну строку через пробел,",
             "при их отсутствии вывести 'empty'",
             "- вывести результат поиска строки-запроса среди элементов: exists/doesn't exist",
-            f"- вывести {_describe_summary_rule(v)} в следующем формате: '{_describe_summary_format(v)}'",
+            f"- вывести {_describe_summary_rule(v)} в следующем формате: ",
+            f"  '{_describe_summary_format(v)}'.",
         ]
         return "\n".join(lines)
 
@@ -412,7 +417,7 @@ class Lab4Task(BaseTask):
             elif kind == "mixed":
                 pool = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
                 chars = [rng.choice(pool) for _ in range(length)]
-            else:  # rule_specific — генерируем так, чтобы иногда подходило под правило
+            else:
                 if variant.select_rule == "digits":
                     chars = [rng.choice("0123456789") for _ in range(length)]
                 elif variant.select_rule == "alpha":
@@ -555,19 +560,17 @@ class Lab4Task(BaseTask):
 
 def _describe_select_rule(variant: Variant) -> str:
     if variant.select_rule == "digits":
-        return "Выбрать только те элементы, каждый символ которых является цифрой"
+        return "Выбрать только те элементы, каждый символ которых является цифрой (0-9)"
     if variant.select_rule == "alpha":
-        return "Выбрать только те элементы, каждый символ которых является буквой"
+        return "Выбрать только те элементы, каждый символ которых является буквой латинского алфавита"
     if variant.select_rule == "lower":
-        return "Выбрать только те буквенные элементы, каждый символ которых находится в нижнем регистре"
+        return "Выбрать только те элементы, каждый символ которых является строчной буквой латинского алфавита"
     if variant.select_rule == "upper":
-        return "Выбрать только те буквенные элементы, каждый символ которых находится в верхнем регистре"
+        return "Выбрать только те элементы, каждый символ которых является заглавной буквой латинского алфавита"
     if variant.select_rule == "prefix":
-        if variant.pattern:
-            return f"Выбрать только те элементы, которые начинаются с префикса {variant.pattern}"
+        return f"Выбрать только те элементы, которые начинаются с префикса '{variant.pattern}'"
     if variant.select_rule == "substring":
-        if variant.pattern:
-            return f"Выбрать только те элементы, которые содержат заданную подстроку {variant.pattern}"
+        return f"Выбрать только те элементы, которые содержат подстроку '{variant.pattern}'"
     return ""
 
 def _describe_sort_rule(variant: Variant) -> str:
@@ -589,10 +592,10 @@ def _describe_summary_rule(variant: Variant) -> str:
 
 def _describe_summary_format(variant: Variant) -> str:
     if variant.summary_rule == "count":
-        return "summary: count=<число>"
+        return "summary: count=<число> (если элементов нет, вывести count=0)"
     if variant.summary_rule == "maxlen":
-        return "summary: maxlen=<число>"
+        return "summary: maxlen=<число> (если элементов нет, вывести maxlen=0)"
     if variant.summary_rule == "minlen":
-        return "summary: minlen=<число>"
+        return "summary: minlen=<число> (если элементов нет, вывести minlen=0)"
     if variant.summary_rule == "first_last":
-        return "summary: first=<элемент> last=<элемент>"
+        return "summary: first=<элемент> last=<элемент> (если элементов нет, вывести first= last=)"
