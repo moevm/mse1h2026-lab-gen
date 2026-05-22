@@ -497,6 +497,145 @@ class Lab6Task(BaseTask):
             })
         return tests
 
+    def _struct_code(self, list_type: int) -> str:
+        if list_type == 0:
+            return "struct ListNode { struct ListNode *next; int data; };\nstruct ListStruct { struct ListNode *head; };"
+        if list_type == 1:
+            return "struct ListNode { struct ListNode *next; struct ListNode *prev; int data; };\nstruct ListStruct { struct ListNode *head; };"
+        if list_type == 2:
+            return "#define BLOCK_SIZE 4\nstruct ListNode { int data[BLOCK_SIZE]; int count; struct ListNode *next; };\nstruct ListStruct { struct ListNode *head; };"
+        return "struct ListNode { struct ListNode *link; int data; };\nstruct ListStruct { struct ListNode *head; };"
+
+    def _dump_code(self, list_type: int) -> str:
+        if list_type == 2:
+            return """
+int dump(struct ListStruct *l, int *out) {
+    int n = 0;
+    for (struct ListNode *p = l->head; p; p = p->next)
+        for (int i = 0; i < p->count; i++) out[n++] = p->data[i];
+    return n;
+}
+"""
+        if list_type == 1:
+            return """
+int dump(struct ListStruct *l, int *out) {
+    if (!l->head) return 0;
+    int n = 0; struct ListNode *p = l->head;
+    do { out[n++] = p->data; p = p->next; } while (p != l->head && n < 1000);
+    return n;
+}
+"""
+        if list_type == 3:
+            return """
+static struct ListNode *hx(struct ListNode *a, struct ListNode *b) {
+    return (struct ListNode*)((uintptr_t)a ^ (uintptr_t)b);
+}
+int dump(struct ListStruct *l, int *out) {
+    int n = 0; struct ListNode *prev = NULL; struct ListNode *cur = l->head;
+    while (cur && n < 1000) { out[n++] = cur->data; struct ListNode *next = hx(prev, cur->link); prev = cur; cur = next; }
+    return n;
+}
+"""
+        return """
+int dump(struct ListStruct *l, int *out) {
+    int n = 0;
+    for (struct ListNode *p = l->head; p; p = p->next) out[n++] = p->data;
+    return n;
+}
+"""
+
+    def _expect_code(self, arr: list[int], name: str) -> str:
+        if arr:
+            return f"int {name}[] = {{{', '.join(map(str, arr))}}}; int {name}_n = {len(arr)};"
+        return f"int {name}[1] = {{0}}; int {name}_n = 0;"
+
+    def _core_call(self, code: int, arr: list[int], params: dict[str, int], idx: int) -> str:
+        p = params
+        if code == 0: return f"ASSERT_INT(list_count_greater(l, {p['X']}), {_count_greater(arr, p['X'])});"
+        if code == 1: return f"ASSERT_INT(list_sum_divisible(l, {p['D']}), {_sum_divisible(arr, p['D'])});"
+        if code == 2: return f"ASSERT_INT(list_count_range(l, {p['A']}, {p['B']}), {_count_range(arr, p['A'], p['B'])});"
+        if code == 3: return f"ASSERT_INT(list_sum_by_step(l, {p['P']}, {p['K']}), {_sum_by_step(arr, p['P'], p['K'])});"
+        if code == 5: return f"ASSERT_INT(list_find_first_greater(l, {p['X']}) == NULL ? -1 : 0, {_first_greater(arr, p['X']) == -1 and -1 or 0});"
+        if code == 9: return f"ASSERT_INT(list_find_last_less_index(l, {p['X']}), {_last_less(arr, p['X'])});"
+        if code == 10: return f"ASSERT_INT(list_has_range_value(l, {p['A']}, {p['B']}) ? 1 : 0, {int(_has_range(arr, p['A'], p['B']))});"
+        if code == 12: return f"ASSERT_INT(list_sum_index_range(l, {p['P']}, {p['R']}), {_sum_index_range(arr, p['P'], p['R'])});"
+        if code == 14: return f"ASSERT_INT(list_is_alternating_by_x(l, {p['X']}) ? 1 : 0, {int(_alternating(arr, p['X']))});"
+        if code == 18: return f"ASSERT_INT(list_count_neighbor_pairs_sum(l, {p['S']}), {_pairs_sum(arr, p['S'])});"
+        if code == 19: return f"ASSERT_INT(list_all_by_step_greater(l, {p['P']}, {p['K']}, {p['X']}) ? 1 : 0, {int(_all_step_gt(arr, p['P'], p['K'], p['X']))});"
+        if code == 4:
+            exp = _rotate_right(arr, p['K'])
+            return self._expect_code(exp, f"e{idx}") + f"\nlist_rotate_right(l, {p['K']}); ASSERT_LIST(e{idx}, e{idx}_n);"
+        if code == 6:
+            exp = _partition(arr, p['X'])
+            return self._expect_code(exp, f"e{idx}") + f"\nlist_partition(l, {p['X']}); ASSERT_LIST(e{idx}, e{idx}_n);"
+        if code == 7:
+            exp = _remove_equal(arr, p['X'])
+            return self._expect_code(exp, f"e{idx}") + f"\nlist_remove_all_equal(l, {p['X']}); ASSERT_LIST(e{idx}, e{idx}_n);"
+        if code == 8:
+            exp = _replace_value(arr, p['X'], p['VALUE'])
+            return self._expect_code(exp, f"e{idx}") + f"\nlist_replace_value(l, {p['X']}, {p['VALUE']}); ASSERT_LIST(e{idx}, e{idx}_n);"
+        if code == 11:
+            exp = _remove_out(arr, p['A'], p['B'])
+            return self._expect_code(exp, f"e{idx}") + f"\nlist_remove_out_of_range(l, {p['A']}, {p['B']}); ASSERT_LIST(e{idx}, e{idx}_n);"
+        if code == 13:
+            exp = _multiply_step(arr, p['P'], p['K'], p['M'])
+            return self._expect_code(exp, f"e{idx}") + f"\nlist_multiply_by_step(l, {p['P']}, {p['K']}, {p['M']}); ASSERT_LIST(e{idx}, e{idx}_n);"
+        if code == 15:
+            exp = _clamp(arr, p['A'], p['B'])
+            return self._expect_code(exp, f"e{idx}") + f"\nlist_clamp(l, {p['A']}, {p['B']}); ASSERT_LIST(e{idx}, e{idx}_n);"
+        if code == 16:
+            exp = _insert_after_divisible(arr, p['D'], p['VALUE'])
+            return self._expect_code(exp, f"e{idx}") + f"\nlist_insert_value_after_divisible(l, {p['D']}, {p['VALUE']}); ASSERT_LIST(e{idx}, e{idx}_n);"
+        exp = _compress_x(arr, p['X'])
+        return self._expect_code(exp, f"e{idx}") + f"\nlist_compress_x_runs(l, {p['X']}); ASSERT_LIST(e{idx}, e{idx}_n);"
+
+    def _make_harness(self, solution_name: str) -> str:
+        v = self._build_variant()
+        std_tests = []
+        core_tests = []
+        for i, test in enumerate(self.generate_tests()):
+            arr = test["array"]
+            std_tests.append("{\n" + self._expect_code(sorted(arr), f"s{i}") + f"\nstruct ListStruct *l = make_list((int[]){{{', '.join(map(str, arr)) or '0'}}}, {len(arr)}); ASSERT_INT(list_count(l), {len(arr)}); list_sort(l); ASSERT_LIST(s{i}, s{i}_n); list_destroy(l);\n}}")
+            for code in v["CORES"]:
+                core_tests.append(f"{{\nstruct ListStruct *l = make_list((int[]){{{', '.join(map(str, arr)) or '0'}}}, {len(arr)});\n{self._core_call(code, arr, v['params'], i * 100 + code)}\nlist_destroy(l);\n}}")
+        return f"""
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+{self._struct_code(v['LIST_TYPE'])}
+#include \"{solution_name}\"
+{self._dump_code(v['LIST_TYPE'])}
+#define ASSERT_INT(a,b) do {{ if ((a)!=(b)) {{ printf(\"FAIL int: %d != %d\\n\", (int)(a), (int)(b)); return 1; }} }} while(0)
+#define ASSERT_LIST(e,n) do {{ int out[1000]; int got = dump(l, out); if (got != (n)) {{ printf(\"FAIL count: %d != %d\\n\", got, (n)); return 1; }} for (int qi=0; qi<got; qi++) if (out[qi] != (e)[qi]) {{ printf(\"FAIL list at %d: %d != %d\\n\", qi, out[qi], (e)[qi]); return 1; }} }} while(0)
+struct ListStruct *make_list(int *a, int n) {{ struct ListStruct *l = list_init(); for (int i=0; i<n; i++) list_push_back(l, a[i]); return l; }}
+int main(void) {{
+{chr(10).join(std_tests)}
+{chr(10).join(core_tests)}
+printf(\"OK\\n\");
+return 0;
+}}
+"""
 
     def check(self, solution_path: str) -> tuple[bool, str]:
-        return False, "Lab6 checker is not implemented yet"
+        src = Path(solution_path)
+        if not src.exists():
+            return False, f"Solution file not found: {solution_path}"
+        build = Path(tempfile.mkdtemp(prefix="lab6-"))
+        try:
+            shutil.copy(src, build / "solution.c")
+            (build / "test.c").write_text(self._make_harness("solution.c"), encoding="utf-8")
+            exe = build / "test"
+            cmd = [self.compiler, "-std=c11", "-Wall", "-Wextra", str(build / "test.c"), "-o", str(exe)]
+            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            if res.returncode != 0:
+                return False, "Ошибка компиляции решения:\n" + res.stdout
+            run = subprocess.run([str(exe)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            if run.returncode != 0:
+                details = run.stdout.strip()
+                if not details:
+                    details = f"Решение завершилось с кодом {run.returncode}, но не вывело диагностическое сообщение."
+                return False, "Тесты не пройдены:\n" + details
+            return True, "Все тесты пройдены"
+        finally:
+            shutil.rmtree(build, ignore_errors=True)
