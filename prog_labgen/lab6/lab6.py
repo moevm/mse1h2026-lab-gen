@@ -284,17 +284,219 @@ def _format_core_params(spec: CoreSpec, params: dict[str, int]) -> str:
 
 
 
+def _count_greater(a, x): return sum(v > x for v in a)
+def _sum_divisible(a, d): return sum(v for v in a if v % d == 0)
+def _count_range(a, lo, hi): return sum(lo <= v <= hi for v in a)
+def _sum_by_step(a, p, k): return 0 if p >= len(a) else sum(a[i] for i in range(p, len(a), k))
+def _rotate_right(a, k): return a[-(k % len(a)):] + a[:-(k % len(a))] if a else a
+
+def _first_greater(a, x):
+    for i, v in enumerate(a):
+        if v > x:
+            return i
+    return -1
+
+def _partition(a, x): return [v for v in a if v < x] + [v for v in a if v >= x]
+def _remove_equal(a, x): return [v for v in a if v != x]
+def _replace_value(a, x, value): return [value if v == x else v for v in a]
+def _last_less(a, x): return max([i for i, v in enumerate(a) if v < x], default=-1)
+def _has_range(a, lo, hi): return any(lo <= v <= hi for v in a)
+def _remove_out(a, lo, hi): return [v for v in a if lo <= v <= hi]
+def _sum_index_range(a, p, r): return sum(a[max(0, p):min(len(a), r + 1)])
+def _multiply_step(a, p, k, m):
+    b = a[:]
+    for i in range(p, len(b), k):
+        b[i] *= m
+    return b
+
+def _alternating(a, x):
+    return all((a[i] < x) != (a[i - 1] < x) for i in range(1, len(a)))
+
+def _clamp(a, lo, hi): return [min(max(v, lo), hi) for v in a]
+
+def _insert_after_divisible(a, d, value):
+    b = []
+    for v in a:
+        b.append(v)
+        if v % d == 0:
+            b.append(value)
+    return b
+
+def _compress_x(a, x):
+    b = []
+    prev_x = False
+    for v in a:
+        if v == x:
+            if not prev_x:
+                b.append(v)
+            prev_x = True
+        else:
+            b.append(v)
+            prev_x = False
+    return b
+
+def _pairs_sum(a, s): return sum(1 for i in range(len(a) - 1) if a[i] + a[i + 1] == s)
+def _all_step_gt(a, p, k, x): return p < len(a) and all(a[i] > x for i in range(p, len(a), k))
+
 
 class Lab6Task(BaseTask):
     def __init__(self, seed: str, tests_count: int = 5, fail_on_first_test: bool = True, compiler: str | None = None) -> None:
         super().__init__(seed=seed, fail_on_first_test=fail_on_first_test, compiler=compiler)
         self.tests_count = tests_count
+        self._variant: dict[str, Any] | None = None
+
+    def _build_variant(self) -> dict[str, Any]:
+        if self._variant is not None:
+            return self._variant
+        rnd = self.make_random()
+        list_type = rnd.randint(0, 3)
+        available = [i for i in CORES if not (list_type == 2 and i == 5)]
+        cores = rand_sample(rnd, available, 4)
+        a = rnd.randint(-10, 0)
+        b = rnd.randint(1, 10)
+        self._variant = {
+            "seed": self.seed,
+            "seed_hash": self.make_seed_hash(),
+            "LIST_TYPE": list_type,
+            "INSERT_MODE": rnd.randint(0, 1),
+            "CORES": cores,
+            "params": {
+                "X": rnd.randint(-5, 5), "D": rnd.randint(2, 5),
+                "A": a, "B": b, "P": rnd.randint(0, 3),
+                "K": rnd.randint(1, 3), "M": rnd.randint(2, 4),
+                "R": rnd.randint(2, 7), "S": rnd.randint(-5, 8),
+                "VALUE": rnd.randint(10, 20),
+            },
+        }
+        return self._variant
 
     def render_assignment(self) -> str:
-        return f"Концепция варианта ЛР6\nSeed: {self.seed}"
+        variant = self._build_variant()
+        params = variant["params"]
+        list_type = variant["LIST_TYPE"]
+
+        lines = [
+            "Концепция варианта ЛР6",
+            f"Seed: {variant['seed']}",
+            f"Seed hash: {variant['seed_hash']}",
+            f"LIST_TYPE: {list_type} ({LIST_TYPES[list_type]})",
+            f"INSERT_MODE: {variant['INSERT_MODE']}",
+            "CORE_1: " + str(variant["CORES"][0]),
+            "CORE_2: " + str(variant["CORES"][1]),
+            "CORE_3: " + str(variant["CORES"][2]),
+            "CORE_4: " + str(variant["CORES"][3]),
+            "",
+        ]
+
+        lines.extend(_list_type_assignment_text(list_type))
+        lines.append("")
+        lines.extend(_standard_functions_assignment_text())
+        lines.append("")
+        lines.extend(_insert_assignment_text(list_type, variant["INSERT_MODE"]))
+        lines.append("")
+        lines.append("Также необходимо реализовать дополнительные индивидуальные функции варианта.")
+        lines.append("Эти функции не заменяют стандартный API, а добавляются к нему.")
+        lines.append("Ниже перечислены только функции, назначенные в вашем варианте.")
+        lines.append("")
+        lines.append("Дополнительные индивидуальные функции:")
+
+        for index, code in enumerate(variant["CORES"], start=1):
+            spec = CORES[code]
+            lines.append("")
+            lines.append(f"{index}. {spec.title}")
+            core_params = _format_core_params(spec, params)
+            if core_params:
+                lines.append(f"Параметры: {core_params}.")
+            lines.append("")
+            lines.append(spec.prototype)
+            lines.append(spec.description)
+
+        return "\n".join(lines)
+
+    def _make_array(self, salt: str) -> list[int]:
+        rnd = self.make_random(salt)
+        n = rnd.randint(0, 10)
+        return [rnd.randint(-8, 12) for _ in range(n)]
+
+    def _expected_lines_for_array(self, arr: list[int]) -> list[str]:
+        v = self._build_variant()
+        p = v["params"]
+        lines = [
+            f"INPUT_ARRAY: {' '.join(map(str, arr)) if arr else 'empty'}",
+            f"LIST_COUNT: {len(arr)}",
+            f"SORTED: {' '.join(map(str, sorted(arr))) if arr else 'empty'}",
+        ]
+
+        for core_index, code in enumerate(v["CORES"], start=1):
+            spec = CORES[code]
+            prefix = f"CORE_{core_index} {spec.prototype}"
+
+            if code == 0:
+                lines.append(f"{prefix} -> {_count_greater(arr, p['X'])}")
+            elif code == 1:
+                lines.append(f"{prefix} -> {_sum_divisible(arr, p['D'])}")
+            elif code == 2:
+                lines.append(f"{prefix} -> {_count_range(arr, p['A'], p['B'])}")
+            elif code == 3:
+                lines.append(f"{prefix} -> {_sum_by_step(arr, p['P'], p['K'])}")
+            elif code == 4:
+                expected = _rotate_right(arr, p['K'])
+                lines.append(f"{prefix} -> {' '.join(map(str, expected)) if expected else 'empty'}")
+            elif code == 5:
+                idx = _first_greater(arr, p['X'])
+                lines.append(f"{prefix} -> {'NULL' if idx == -1 else 'index ' + str(idx)}")
+            elif code == 6:
+                expected = _partition(arr, p['X'])
+                lines.append(f"{prefix} -> {' '.join(map(str, expected)) if expected else 'empty'}")
+            elif code == 7:
+                expected = _remove_equal(arr, p['X'])
+                lines.append(f"{prefix} -> {' '.join(map(str, expected)) if expected else 'empty'}")
+            elif code == 8:
+                expected = _replace_value(arr, p['X'], p['VALUE'])
+                lines.append(f"{prefix} -> {' '.join(map(str, expected)) if expected else 'empty'}")
+            elif code == 9:
+                lines.append(f"{prefix} -> {_last_less(arr, p['X'])}")
+            elif code == 10:
+                lines.append(f"{prefix} -> {str(_has_range(arr, p['A'], p['B'])).lower()}")
+            elif code == 11:
+                expected = _remove_out(arr, p['A'], p['B'])
+                lines.append(f"{prefix} -> {' '.join(map(str, expected)) if expected else 'empty'}")
+            elif code == 12:
+                lines.append(f"{prefix} -> {_sum_index_range(arr, p['P'], p['R'])}")
+            elif code == 13:
+                expected = _multiply_step(arr, p['P'], p['K'], p['M'])
+                lines.append(f"{prefix} -> {' '.join(map(str, expected)) if expected else 'empty'}")
+            elif code == 14:
+                lines.append(f"{prefix} -> {str(_alternating(arr, p['X'])).lower()}")
+            elif code == 15:
+                expected = _clamp(arr, p['A'], p['B'])
+                lines.append(f"{prefix} -> {' '.join(map(str, expected)) if expected else 'empty'}")
+            elif code == 16:
+                expected = _insert_after_divisible(arr, p['D'], p['VALUE'])
+                lines.append(f"{prefix} -> {' '.join(map(str, expected)) if expected else 'empty'}")
+            elif code == 17:
+                expected = _compress_x(arr, p['X'])
+                lines.append(f"{prefix} -> {' '.join(map(str, expected)) if expected else 'empty'}")
+            elif code == 18:
+                lines.append(f"{prefix} -> {_pairs_sum(arr, p['S'])}")
+            elif code == 19:
+                lines.append(f"{prefix} -> {str(_all_step_gt(arr, p['P'], p['K'], p['X'])).lower()}")
+
+        return lines
 
     def generate_tests(self) -> list[dict[str, Any]]:
-        return []
+        tests: list[dict[str, Any]] = []
+        for i in range(self.tests_count):
+            arr = self._make_array(f"test-{i}")
+            expected_stdout = "\n".join(self._expected_lines_for_array(arr)) + "\n"
+            tests.append({
+                "input_array": arr,
+                "stdin": "",
+                "expected_stdout": expected_stdout,
+                "array": arr,
+            })
+        return tests
+
 
     def check(self, solution_path: str) -> tuple[bool, str]:
         return False, "Lab6 checker is not implemented yet"
