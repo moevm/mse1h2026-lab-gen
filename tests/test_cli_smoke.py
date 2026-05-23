@@ -4,7 +4,7 @@ import subprocess
 import sys
 
 
-LABS = ("lab1", "lab2", "lab3", "lab4")
+LABS = ("lab1", "lab2", "lab3", "lab4", "lab5", "lab6")
 
 
 def run_cli(*args: str) -> subprocess.CompletedProcess[str]:

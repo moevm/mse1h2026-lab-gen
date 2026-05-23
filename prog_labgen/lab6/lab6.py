@@ -554,6 +554,20 @@ struct ListNode *__lab6_expected_tail(struct ListStruct *l) {
     while (p->next) p = p->next;
     return p;
 }
+
+int __lab6_validate_structure(struct ListStruct *l, int expected_n) {
+    if (!l) return 0;
+    if (expected_n == 0) return l->head == NULL;
+
+    int total = 0;
+    for (struct ListNode *p = l->head; p; p = p->next) {
+        if (p->count <= 0 || p->count > BLOCK_SIZE) return 0;
+        total += p->count;
+        if (p->next && p->count != BLOCK_SIZE) return 0;
+        if (total > expected_n) return 0;
+    }
+    return total == expected_n;
+}
 """
         if list_type == 1:
             return """
@@ -583,6 +597,24 @@ struct ListNode *__lab6_expected_node(struct ListStruct *l, int index) {
 struct ListNode *__lab6_expected_tail(struct ListStruct *l) {
     if (!l || !l->head) return NULL;
     return l->head->prev;
+}
+
+int __lab6_validate_structure(struct ListStruct *l, int expected_n) {
+    if (!l) return 0;
+    if (expected_n == 0) return l->head == NULL;
+    if (!l->head || !l->head->prev || !l->head->next) return 0;
+
+    int n = 0;
+    struct ListNode *p = l->head;
+    do {
+        if (!p || !p->next || !p->prev) return 0;
+        if (p->next->prev != p) return 0;
+        if (p->prev->next != p) return 0;
+        p = p->next;
+        n++;
+        if (n > expected_n) return 0;
+    } while (p != l->head);
+    return n == expected_n;
 }
 """
         if list_type == 3:
@@ -632,6 +664,11 @@ struct ListNode *__lab6_expected_tail(struct ListStruct *l) {
     }
     return NULL;
 }
+
+int __lab6_validate_structure(struct ListStruct *l, int expected_n) {
+    int out[1000];
+    return dump(l, out) == expected_n;
+}
 """
         return """
 int dump(struct ListStruct *l, int *out) {
@@ -656,6 +693,18 @@ struct ListNode *__lab6_expected_tail(struct ListStruct *l) {
     struct ListNode *p = l->head;
     while (p->next) p = p->next;
     return p;
+}
+
+int __lab6_validate_structure(struct ListStruct *l, int expected_n) {
+    if (!l) return 0;
+    if (expected_n == 0) return l->head == NULL;
+
+    int n = 0;
+    for (struct ListNode *p = l->head; p; p = p->next) {
+        n++;
+        if (n > expected_n) return 0;
+    }
+    return n == expected_n;
 }
 """
 
@@ -859,7 +908,7 @@ struct ListNode *__lab6_expected_tail(struct ListStruct *l) {
         if code == 1: return f"ASSERT_INT(list_sum_divisible(l, {p['D']}), {_sum_divisible(arr, p['D'])});"
         if code == 2: return f"ASSERT_INT(list_count_range(l, {p['A']}, {p['B']}), {_count_range(arr, p['A'], p['B'])});"
         if code == 3: return f"ASSERT_INT(list_sum_by_step(l, {p['P']}, {p['K']}), {_sum_by_step(arr, p['P'], p['K'])});"
-        if code == 5: return f"ASSERT_INT(list_find_first_greater(l, {p['X']}) == NULL ? -1 : 0, {_first_greater(arr, p['X']) == -1 and -1 or 0});"
+        if code == 5: return f"ASSERT_INT(__lab6_index_of_node(l, list_find_first_greater(l, {p['X']})), {_first_greater(arr, p['X'])});"
         if code == 9: return f"ASSERT_INT(list_find_last_less_index(l, {p['X']}), {_last_less(arr, p['X'])});"
         if code == 10: return f"ASSERT_INT(list_has_range_value(l, {p['A']}, {p['B']}) ? 1 : 0, {int(_has_range(arr, p['A'], p['B']))});"
         if code == 12: return f"ASSERT_INT(list_sum_index_range(l, {p['P']}, {p['R']}), {_sum_index_range(arr, p['P'], p['R'])});"
@@ -938,6 +987,16 @@ struct ListNode *__lab6_expected_tail(struct ListStruct *l) {
 
 {self._dump_code(v['LIST_TYPE'])}
 
+int __lab6_index_of_node(struct ListStruct *l, struct ListNode *target) {{
+    if (!target) return -1;
+    int out[1000];
+    int n = dump(l, out);
+    for (int i = 0; i < n; i++) {{
+        if (__lab6_expected_node(l, i) == target) return i;
+    }}
+    return -2;
+}}
+
 #define ASSERT_INT(a,b) do {{ \
     int _got = (int)(a); \
     int _expected = (int)(b); \
@@ -979,6 +1038,7 @@ struct ListNode *__lab6_expected_tail(struct ListStruct *l) {
 }} while(0)
 
 #define ASSERT_ACCESSORS(e,n) do {{ \
+    ASSERT_INT(__lab6_validate_structure(l, (n)), 1); \
     ASSERT_INT(list_count(l), (n)); \
     ASSERT_INT(list_is_empty(l) ? 1 : 0, ((n) == 0) ? 1 : 0); \
     ASSERT_PTR_EQ(list_get_head(l), (l)->head); \

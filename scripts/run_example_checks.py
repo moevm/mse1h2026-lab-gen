@@ -82,6 +82,34 @@ CASES: tuple[ExampleCase, ...] = (
         solution_path=ROOT / "examples" / "lab4_solution_bad.c",
         expected_pass=False,
     ),
+    ExampleCase(
+        label="lab5 good",
+        lab="lab5",
+        seed="test123",
+        solution_path=ROOT / "examples" / "lab5_solution_good.c",
+        expected_pass=True,
+    ),
+    ExampleCase(
+        label="lab5 bad",
+        lab="lab5",
+        seed="test123",
+        solution_path=ROOT / "examples" / "lab5_solution_bad.c",
+        expected_pass=False,
+    ),
+    ExampleCase(
+        label="lab6 good",
+        lab="lab6",
+        seed="test_student",
+        solution_path=ROOT / "examples" / "lab6_solution_good.c",
+        expected_pass=True,
+    ),
+    ExampleCase(
+        label="lab6 bad",
+        lab="lab6",
+        seed="test_student",
+        solution_path=ROOT / "examples" / "lab6_solution_bad.c",
+        expected_pass=False,
+    ),
 )
 
 
