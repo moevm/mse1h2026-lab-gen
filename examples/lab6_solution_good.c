@@ -2,6 +2,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+// made for seed="test_student"
+
 static struct ListNode *xnode(struct ListNode *a, struct ListNode *b) {
     return (struct ListNode *)((uintptr_t)a ^ (uintptr_t)b);
 }
