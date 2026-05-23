@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import shutil
 import subprocess
 import tempfile
@@ -486,15 +487,34 @@ class Lab6Task(BaseTask):
 
     def generate_tests(self) -> list[dict[str, Any]]:
         tests: list[dict[str, Any]] = []
+        variant = self._build_variant()
+
         for i in range(self.tests_count):
             arr = self._make_array(f"test-{i}")
-            expected_stdout = "\n".join(self._expected_lines_for_array(arr)) + "\n"
+            expected_details = "\n".join(self._expected_lines_for_array(arr)) + "\n"
+
+            moodle_payload = {
+                "seed": variant["seed"],
+                "seed_hash": variant["seed_hash"],
+                "LIST_TYPE": variant["LIST_TYPE"],
+                "INSERT_MODE": variant["INSERT_MODE"],
+                "CORES": variant["CORES"],
+                "params": variant["params"],
+                "input_array": arr,
+            }
+
+            stdin_text = json.dumps(moodle_payload, ensure_ascii=False, sort_keys=True)
+
             tests.append({
                 "input_array": arr,
-                "stdin": "",
-                "expected_stdout": expected_stdout,
+                "stdin": stdin_text,
+                "expected_stdout": "OK\n",
+                "expected_output": "OK\n",
+                "expected_details": expected_details,
                 "array": arr,
+                "variant": moodle_payload,
             })
+
         return tests
 
     def _struct_code(self, list_type: int) -> str:
@@ -511,18 +531,58 @@ class Lab6Task(BaseTask):
             return """
 int dump(struct ListStruct *l, int *out) {
     int n = 0;
-    for (struct ListNode *p = l->head; p; p = p->next)
-        for (int i = 0; i < p->count; i++) out[n++] = p->data[i];
+    if (!l) return 0;
+    for (struct ListNode *p = l->head; p && n < 1000; p = p->next) {
+        for (int i = 0; i < p->count && n < 1000; i++) out[n++] = p->data[i];
+    }
     return n;
+}
+
+struct ListNode *__lab6_expected_node(struct ListStruct *l, int index) {
+    if (!l || index < 0) return NULL;
+    int pos = 0;
+    for (struct ListNode *p = l->head; p; p = p->next) {
+        if (index < pos + p->count) return p;
+        pos += p->count;
+    }
+    return NULL;
+}
+
+struct ListNode *__lab6_expected_tail(struct ListStruct *l) {
+    if (!l || !l->head) return NULL;
+    struct ListNode *p = l->head;
+    while (p->next) p = p->next;
+    return p;
 }
 """
         if list_type == 1:
             return """
 int dump(struct ListStruct *l, int *out) {
-    if (!l->head) return 0;
-    int n = 0; struct ListNode *p = l->head;
-    do { out[n++] = p->data; p = p->next; } while (p != l->head && n < 1000);
+    if (!l || !l->head) return 0;
+    int n = 0;
+    struct ListNode *p = l->head;
+    do {
+        out[n++] = p->data;
+        p = p->next;
+    } while (p && p != l->head && n < 1000);
     return n;
+}
+
+struct ListNode *__lab6_expected_node(struct ListStruct *l, int index) {
+    if (!l || !l->head || index < 0) return NULL;
+    int i = 0;
+    struct ListNode *p = l->head;
+    do {
+        if (i == index) return p;
+        i++;
+        p = p->next;
+    } while (p && p != l->head && i < 1000);
+    return NULL;
+}
+
+struct ListNode *__lab6_expected_tail(struct ListStruct *l) {
+    if (!l || !l->head) return NULL;
+    return l->head->prev;
 }
 """
         if list_type == 3:
@@ -530,17 +590,72 @@ int dump(struct ListStruct *l, int *out) {
 static struct ListNode *hx(struct ListNode *a, struct ListNode *b) {
     return (struct ListNode*)((uintptr_t)a ^ (uintptr_t)b);
 }
+
 int dump(struct ListStruct *l, int *out) {
-    int n = 0; struct ListNode *prev = NULL; struct ListNode *cur = l->head;
-    while (cur && n < 1000) { out[n++] = cur->data; struct ListNode *next = hx(prev, cur->link); prev = cur; cur = next; }
+    int n = 0;
+    if (!l) return 0;
+    struct ListNode *prev = NULL;
+    struct ListNode *cur = l->head;
+    while (cur && n < 1000) {
+        out[n++] = cur->data;
+        struct ListNode *next = hx(prev, cur->link);
+        prev = cur;
+        cur = next;
+    }
     return n;
+}
+
+struct ListNode *__lab6_expected_node(struct ListStruct *l, int index) {
+    if (!l || index < 0) return NULL;
+    int i = 0;
+    struct ListNode *prev = NULL;
+    struct ListNode *cur = l->head;
+    while (cur && i < 1000) {
+        if (i == index) return cur;
+        struct ListNode *next = hx(prev, cur->link);
+        prev = cur;
+        cur = next;
+        i++;
+    }
+    return NULL;
+}
+
+struct ListNode *__lab6_expected_tail(struct ListStruct *l) {
+    if (!l) return NULL;
+    struct ListNode *prev = NULL;
+    struct ListNode *cur = l->head;
+    while (cur) {
+        struct ListNode *next = hx(prev, cur->link);
+        if (!next) return cur;
+        prev = cur;
+        cur = next;
+    }
+    return NULL;
 }
 """
         return """
 int dump(struct ListStruct *l, int *out) {
     int n = 0;
-    for (struct ListNode *p = l->head; p; p = p->next) out[n++] = p->data;
+    if (!l) return 0;
+    for (struct ListNode *p = l->head; p && n < 1000; p = p->next) out[n++] = p->data;
     return n;
+}
+
+struct ListNode *__lab6_expected_node(struct ListStruct *l, int index) {
+    if (!l || index < 0) return NULL;
+    int i = 0;
+    for (struct ListNode *p = l->head; p; p = p->next) {
+        if (i == index) return p;
+        i++;
+    }
+    return NULL;
+}
+
+struct ListNode *__lab6_expected_tail(struct ListStruct *l) {
+    if (!l || !l->head) return NULL;
+    struct ListNode *p = l->head;
+    while (p->next) p = p->next;
+    return p;
 }
 """
 
@@ -548,6 +663,195 @@ int dump(struct ListStruct *l, int *out) {
         if arr:
             return f"int {name}[] = {{{', '.join(map(str, arr))}}}; int {name}_n = {len(arr)};"
         return f"int {name}[1] = {{0}}; int {name}_n = 0;"
+
+    def _list_literal(self, arr: list[int]) -> str:
+        return ", ".join(map(str, arr)) or "0"
+
+    def _assert_accessors_code(self, arr: list[int], name: str) -> str:
+        return self._expect_code(arr, name) + f"\nASSERT_ACCESSORS({name}, {name}_n);"
+
+    def _standard_test_code(self, arr: list[int], idx: int) -> str:
+        v = self._build_variant()
+        list_type = v["LIST_TYPE"]
+        insert_mode = v["INSERT_MODE"]
+        blocks: list[str] = []
+
+        empty_name = f"std_{idx}_empty"
+        blocks.append(
+            "{\n"
+            "struct ListStruct *l = list_init();\n"
+            "ASSERT_PTR_NOT_NULL(l);\n"
+            + self._assert_accessors_code([], empty_name)
+            + "\nlist_pop(l, NULL);\n"
+            + self._assert_accessors_code([], f"{empty_name}_after_pop_null")
+            + "\nlist_destroy(l);\n"
+            "}"
+        )
+
+        model: list[int] = []
+        lines = ["{", "struct ListStruct *l = list_init();"]
+        lines.append(self._assert_accessors_code(model, f"std_{idx}_push_back_0"))
+        for step, value in enumerate(arr, start=1):
+            model.append(value)
+            lines.append(f"list_push_back(l, {value});")
+            lines.append(self._assert_accessors_code(model, f"std_{idx}_push_back_{step}"))
+        lines.append("list_destroy(l);")
+        lines.append("}")
+        blocks.append("\n".join(lines))
+
+        model = []
+        lines = ["{", "struct ListStruct *l = list_init();"]
+        lines.append(self._assert_accessors_code(model, f"std_{idx}_push_front_0"))
+        for step, value in enumerate(arr, start=1):
+            model.insert(0, value)
+            lines.append(f"list_push_front(l, {value});")
+            lines.append(self._assert_accessors_code(model, f"std_{idx}_push_front_{step}"))
+        lines.append("list_destroy(l);")
+        lines.append("}")
+        blocks.append("\n".join(lines))
+
+        sort_expected = sorted(arr)
+        blocks.append(
+            "{\n"
+            f"struct ListStruct *l = make_list((int[]){{{self._list_literal(arr)}}}, {len(arr)});\n"
+            "list_sort(l);\n"
+            + self._assert_accessors_code(sort_expected, f"std_{idx}_sort")
+            + "\nlist_destroy(l);\n"
+            "}"
+        )
+
+        if list_type != 2:
+            model = [10, 20, 30, 40]
+            lines = [
+                "{",
+                f"struct ListStruct *l = make_list((int[]){{{self._list_literal(model)}}}, {len(model)});",
+                self._assert_accessors_code(model, f"std_{idx}_pop_start"),
+                "list_pop(l, NULL);",
+                self._assert_accessors_code(model, f"std_{idx}_pop_null"),
+            ]
+
+            model = model[1:]
+            lines.extend([
+                "list_pop(l, list_get(l, 0));",
+                self._assert_accessors_code(model, f"std_{idx}_pop_head"),
+            ])
+
+            model = model[:-1]
+            lines.extend([
+                "list_pop(l, list_get(l, list_count(l) - 1));",
+                self._assert_accessors_code(model, f"std_{idx}_pop_tail"),
+            ])
+
+            model = [model[0]]
+            lines.extend([
+                "list_pop(l, list_get(l, 1));",
+                self._assert_accessors_code(model, f"std_{idx}_pop_middle"),
+            ])
+
+            model = []
+            lines.extend([
+                "list_pop(l, list_get(l, 0));",
+                self._assert_accessors_code(model, f"std_{idx}_pop_last"),
+                "list_destroy(l);",
+                "}",
+            ])
+            blocks.append("\n".join(lines))
+
+        if list_type == 2:
+            model = []
+            lines = ["{", "struct ListStruct *l = list_init();"]
+
+            model = [10]
+            lines.extend([
+                "list_insert_at(l, 0, 10);",
+                self._assert_accessors_code(model, f"std_{idx}_insert_at_0"),
+            ])
+
+            model = [5, 10]
+            lines.extend([
+                "list_insert_at(l, -5, 5);",
+                self._assert_accessors_code(model, f"std_{idx}_insert_at_front"),
+            ])
+
+            model = [5, 7, 10]
+            lines.extend([
+                "list_insert_at(l, 1, 7);",
+                self._assert_accessors_code(model, f"std_{idx}_insert_at_middle"),
+            ])
+
+            model = [5, 7, 10, 12]
+            lines.extend([
+                "list_insert_at(l, 99, 12);",
+                self._assert_accessors_code(model, f"std_{idx}_insert_at_back"),
+            ])
+
+            model = [5, 7, 10, 9, 12]
+            lines.extend([
+                "list_insert_at(l, 3, 9);",
+                self._assert_accessors_code(model, f"std_{idx}_insert_at_second_middle"),
+                "list_destroy(l);",
+                "}",
+            ])
+            blocks.append("\n".join(lines))
+        elif insert_mode == 0:
+            model = [1, 2, 3]
+            lines = [
+                "{",
+                f"struct ListStruct *l = make_list((int[]){{{self._list_literal(model)}}}, {len(model)});",
+                self._assert_accessors_code(model, f"std_{idx}_insert_before_start"),
+            ]
+
+            model = [1, 2, 3, 9]
+            lines.extend([
+                "list_insert_before(l, NULL, 9);",
+                self._assert_accessors_code(model, f"std_{idx}_insert_before_null"),
+            ])
+
+            model = [8, 1, 2, 3, 9]
+            lines.extend([
+                "list_insert_before(l, list_get_head(l), 8);",
+                self._assert_accessors_code(model, f"std_{idx}_insert_before_head"),
+            ])
+
+            model = [8, 1, 7, 2, 3, 9]
+            lines.extend([
+                "list_insert_before(l, list_get(l, 2), 7);",
+                self._assert_accessors_code(model, f"std_{idx}_insert_before_middle"),
+                "list_destroy(l);",
+                "}",
+            ])
+            blocks.append("\n".join(lines))
+        else:
+            model = [1, 2, 3]
+            lines = [
+                "{",
+                f"struct ListStruct *l = make_list((int[]){{{self._list_literal(model)}}}, {len(model)});",
+                self._assert_accessors_code(model, f"std_{idx}_insert_after_start"),
+            ]
+
+            model = [9, 1, 2, 3]
+            lines.extend([
+                "list_insert_after(l, NULL, 9);",
+                self._assert_accessors_code(model, f"std_{idx}_insert_after_null"),
+            ])
+
+            model = [9, 1, 2, 3, 8]
+            lines.extend([
+                "list_insert_after(l, list_get_tail(l), 8);",
+                self._assert_accessors_code(model, f"std_{idx}_insert_after_tail"),
+            ])
+
+            model = [9, 1, 2, 7, 3, 8]
+            lines.extend([
+                "list_insert_after(l, list_get(l, 2), 7);",
+                self._assert_accessors_code(model, f"std_{idx}_insert_after_middle"),
+                "list_destroy(l);",
+                "}",
+            ])
+            blocks.append("\n".join(lines))
+
+        return "\n".join(blocks)
+
 
     def _core_call(self, code: int, arr: list[int], params: dict[str, int], idx: int) -> str:
         p = params
@@ -591,27 +895,114 @@ int dump(struct ListStruct *l, int *out) {
 
     def _make_harness(self, solution_name: str) -> str:
         v = self._build_variant()
-        std_tests = []
+
+        generated_arrays = [test["array"] for test in self.generate_tests()]
+        fixed_arrays = [
+            [],
+            [5],
+            [1, 2],
+            [3, -1, 4, 3],
+            [0, -2, 7, 7, -2, 5],
+        ]
+
+        standard_arrays: list[list[int]] = []
+        for arr in generated_arrays + fixed_arrays:
+            if arr not in standard_arrays:
+                standard_arrays.append(arr)
+
+        std_tests = [
+            self._standard_test_code(arr, i)
+            for i, arr in enumerate(standard_arrays)
+        ]
+
         core_tests = []
-        for i, test in enumerate(self.generate_tests()):
-            arr = test["array"]
-            std_tests.append("{\n" + self._expect_code(sorted(arr), f"s{i}") + f"\nstruct ListStruct *l = make_list((int[]){{{', '.join(map(str, arr)) or '0'}}}, {len(arr)}); ASSERT_INT(list_count(l), {len(arr)}); list_sort(l); ASSERT_LIST(s{i}, s{i}_n); list_destroy(l);\n}}")
+        for i, arr in enumerate(generated_arrays + fixed_arrays):
             for code in v["CORES"]:
-                core_tests.append(f"{{\nstruct ListStruct *l = make_list((int[]){{{', '.join(map(str, arr)) or '0'}}}, {len(arr)});\n{self._core_call(code, arr, v['params'], i * 100 + code)}\nlist_destroy(l);\n}}")
+                core_tests.append(
+                    "{\n"
+                    + f"struct ListStruct *l = make_list((int[]){{{self._list_literal(arr)}}}, {len(arr)});\n"
+                    + self._core_call(code, arr, v["params"], i * 100 + code)
+                    + "\nlist_destroy(l);\n"
+                    + "}"
+                )
+
         return f"""
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 {self._struct_code(v['LIST_TYPE'])}
+
 #include \"{solution_name}\"
+
 {self._dump_code(v['LIST_TYPE'])}
-#define ASSERT_INT(a,b) do {{ if ((a)!=(b)) {{ printf(\"FAIL int: %d != %d\\n\", (int)(a), (int)(b)); return 1; }} }} while(0)
-#define ASSERT_LIST(e,n) do {{ int out[1000]; int got = dump(l, out); if (got != (n)) {{ printf(\"FAIL count: %d != %d\\n\", got, (n)); return 1; }} for (int qi=0; qi<got; qi++) if (out[qi] != (e)[qi]) {{ printf(\"FAIL list at %d: %d != %d\\n\", qi, out[qi], (e)[qi]); return 1; }} }} while(0)
-struct ListStruct *make_list(int *a, int n) {{ struct ListStruct *l = list_init(); for (int i=0; i<n; i++) list_push_back(l, a[i]); return l; }}
+
+#define ASSERT_INT(a,b) do {{ \
+    int _got = (int)(a); \
+    int _expected = (int)(b); \
+    if (_got != _expected) {{ \
+        printf(\"FAIL int: %d != %d\\n\", _got, _expected); \
+        return 1; \
+    }} \
+}} while(0)
+
+#define ASSERT_PTR_NOT_NULL(p) do {{ \
+    if ((p) == NULL) {{ \
+        printf(\"FAIL ptr: unexpected NULL\\n\"); \
+        return 1; \
+    }} \
+}} while(0)
+
+#define ASSERT_PTR_EQ(a,b) do {{ \
+    void *_got = (void *)(a); \
+    void *_expected = (void *)(b); \
+    if (_got != _expected) {{ \
+        printf(\"FAIL ptr: %p != %p\\n\", _got, _expected); \
+        return 1; \
+    }} \
+}} while(0)
+
+#define ASSERT_LIST(e,n) do {{ \
+    int out[1000]; \
+    int got = dump(l, out); \
+    if (got != (n)) {{ \
+        printf(\"FAIL count: %d != %d\\n\", got, (n)); \
+        return 1; \
+    }} \
+    for (int qi = 0; qi < got; qi++) {{ \
+        if (out[qi] != (e)[qi]) {{ \
+            printf(\"FAIL list at %d: %d != %d\\n\", qi, out[qi], (e)[qi]); \
+            return 1; \
+        }} \
+    }} \
+}} while(0)
+
+#define ASSERT_ACCESSORS(e,n) do {{ \
+    ASSERT_INT(list_count(l), (n)); \
+    ASSERT_INT(list_is_empty(l) ? 1 : 0, ((n) == 0) ? 1 : 0); \
+    ASSERT_PTR_EQ(list_get_head(l), (l)->head); \
+    ASSERT_PTR_EQ(list_get_tail(l), __lab6_expected_tail(l)); \
+    ASSERT_PTR_EQ(list_get(l, -1), NULL); \
+    ASSERT_PTR_EQ(list_get(l, (n)), NULL); \
+    for (int ai = 0; ai < (n); ai++) {{ \
+        ASSERT_PTR_EQ(list_get(l, ai), __lab6_expected_node(l, ai)); \
+    }} \
+    ASSERT_LIST(e, n); \
+}} while(0)
+
+struct ListStruct *make_list(int *a, int n) {{
+    struct ListStruct *l = list_init();
+    if (!l) return NULL;
+    for (int i = 0; i < n; i++) list_push_back(l, a[i]);
+    return l;
+}}
+
 int main(void) {{
 {chr(10).join(std_tests)}
+
 {chr(10).join(core_tests)}
+
 printf(\"OK\\n\");
 return 0;
 }}

@@ -1,6 +1,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+// made for seed="test_student"
+
 struct ListStruct *list_init(void) { return NULL; }
 void list_destroy(struct ListStruct *list) { (void)list; }
 void list_push_front(struct ListStruct *list, int data) { (void)list; (void)data; }
