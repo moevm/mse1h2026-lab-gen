@@ -11,7 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
-DEFAULT_LABS = ("lab1", "lab2", "lab3", "lab4")
+DEFAULT_LABS = ("lab1", "lab2", "lab3", "lab4", "lab5", "lab6")
 DEFAULT_MODES = ("init", "dry-run")
 DEFAULT_SEED_FILE = ROOT / "scripts" / "seed_to_check.txt"
 FORBIDDEN_MARKERS = ("Traceback", "None", "TODO", "<undefined>")
