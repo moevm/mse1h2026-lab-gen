@@ -4,6 +4,7 @@ import re
 import shutil
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Any, Callable
 
 from prog_labgen.base_module import BaseTask, rand_choice, rand_int, rand_sample
@@ -12,6 +13,7 @@ from prog_labgen.base_module import BaseTask, rand_choice, rand_int, rand_sample
 LEVELS = ("INFO", "DEBUG", "WARN", "ERROR", "CRITICAL")
 SERVICES = ("auth-service", "DB_CORE", "api.gateway", "cache", "PAYMENT", "user_handler", "mail-service")
 WORDS = ("timeout", "failed", "denied", "exception", "started", "finished", "connection", "request", "user", "worker")
+REQUIRED_REGEX_MARKERS = ("#include <regex.h>", "regcomp(", "regexec(")
 
 
 @dataclass(frozen=True)
@@ -119,6 +121,10 @@ class Lab5Task(BaseTask):
         return tests
 
     def check(self, solution_path: str) -> tuple[bool, str]:
+        regex_error = _validate_regex_usage(solution_path)
+        if regex_error is not None:
+            return False, regex_error
+
         binary_path, compile_error = self.compile_c_solution(solution_path, output_name="lab5_solution")
         if compile_error is not None or binary_path is None:
             return False, f"Ошибка компиляции решения:\n{compile_error}"
@@ -153,6 +159,23 @@ class Lab5Task(BaseTask):
         all_passed = passed_tests == total_tests
         footer = "Все тесты пройдены" if all_passed else "Есть ошибки"
         return all_passed, "\n".join(messages + [summary, footer])
+
+
+def _validate_regex_usage(solution_path: str) -> str | None:
+    path = Path(solution_path)
+    if not path.exists():
+        return f"Solution file not found: {solution_path}"
+
+    source = path.read_text(encoding="utf-8", errors="ignore")
+    missing = [marker for marker in REQUIRED_REGEX_MARKERS if marker not in source]
+    if not missing:
+        return None
+
+    return (
+        "Решение должно использовать регулярные выражения из стандартной библиотеки C.\n"
+        "Не найдены обязательные маркеры: "
+        + ", ".join(missing)
+    )
 
 
 def normalize_output(text: str) -> str:
