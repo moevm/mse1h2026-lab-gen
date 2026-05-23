@@ -35,10 +35,14 @@ jobs:
           labgen lab2 -h
           labgen lab3 -h
           labgen lab4 -h
+          labgen lab5 -h
+          labgen lab6 -h
           python main.py lab1 -h
           python main.py lab2 -h
           python main.py lab3 -h
           python main.py lab4 -h
+          python main.py lab5 -h
+          python main.py lab6 -h
 
       - name: Check installed CLI outside repository
         run: |
@@ -46,9 +50,13 @@ jobs:
           labgen --help
           labgen lab1 --seed smoke-seed --mode=init
           labgen lab4 --seed smoke-seed --mode=dry-run
+          labgen lab5 --seed smoke-seed --mode=init
+          labgen lab6 --seed smoke-seed --mode=dry-run
 
       - name: Check legacy CLI
-        run: python main.py lab1 --seed smoke-seed --mode=init
+        run: |
+          python main.py lab1 --seed smoke-seed --mode=init
+          python main.py lab6 --seed smoke-seed --mode=dry-run
 
   docker-checks:
     runs-on: ubuntu-latest
@@ -61,13 +69,13 @@ jobs:
         run: docker build -t mse-lab-gen-check .
 
       - name: Check package CLI in Docker
-        run: docker run --rm mse-lab-gen-check -lc "cd /tmp && labgen lab1 --seed smoke-seed --mode=init && labgen lab4 --seed smoke-seed --mode=dry-run"
+        run: docker run --rm mse-lab-gen-check -lc "cd /tmp && labgen lab1 --seed smoke-seed --mode=init && labgen lab4 --seed smoke-seed --mode=dry-run && labgen lab5 --seed smoke-seed --mode=init && labgen lab6 --seed smoke-seed --mode=dry-run"
 
       - name: Check help for all labs in Docker
-        run: docker run --rm mse-lab-gen-check -lc "labgen lab1 -h && labgen lab2 -h && labgen lab3 -h && labgen lab4 -h && python main.py lab1 -h && python main.py lab2 -h && python main.py lab3 -h && python main.py lab4 -h"
+        run: docker run --rm mse-lab-gen-check -lc "labgen lab1 -h && labgen lab2 -h && labgen lab3 -h && labgen lab4 -h && labgen lab5 -h && labgen lab6 -h && python main.py lab1 -h && python main.py lab2 -h && python main.py lab3 -h && python main.py lab4 -h && python main.py lab5 -h && python main.py lab6 -h"
 
       - name: Check legacy CLI in Docker
-        run: docker run --rm mse-lab-gen-check -lc "python main.py lab1 --seed smoke-seed --mode=init"
+        run: docker run --rm mse-lab-gen-check -lc "python main.py lab1 --seed smoke-seed --mode=init && python main.py lab6 --seed smoke-seed --mode=dry-run"
 
       - name: Run pytest in Docker
         run: docker run --rm mse-lab-gen-check -lc "python -m pytest"
