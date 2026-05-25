@@ -1,20 +1,33 @@
 # Генератор лабораторных работ
 
-Проект генерирует персонализированные варианты лабораторных работ по программированию.
+Проект генерирует персонализированные варианты лабораторных работ по программированию и проверочные тесты для них.
 
-Сейчас поддержаны ЛР1-ЛР4:
+Сейчас реализованы 6 из 6 лабораторных работ:
 
 - `lab1` - набор подзадач на обработку массива;
 - `lab2` - многофайловый C-проект с pipeline из step/core функций;
 - `lab3` - обработка текста и предложений;
-- `lab4` - обзор стандартной библиотеки C и работа со строками.
+- `lab4` - обзор стандартной библиотеки C и работа со строками;
+- `lab5` - работа с регулярными выражениями;
+- `lab6` - работа с динамическим списком.
 
-## Запуск через Docker
 
-Нужно установить:
+## Требуемое окружение
+
+Для запуска через Docker нужно установить:
 
 - `git`;
-- `Docker`.
+- Docker 24 или новее.
+
+Для локального запуска без Docker нужно установить:
+
+- Python 3.12;
+- `pip`;
+- `gcc` и `make` для проверок C-решений.
+
+Все команды ниже выполняются из корня репозитория `mse1h2026-lab-gen`.
+
+## Запуск через Docker
 
 Скопируйте и выполните команды:
 
@@ -30,6 +43,26 @@ docker run --rm -it mse-lab-gen
 ```bash
 python main.py -h
 ```
+
+Проверить корректность запуска:
+
+```bash
+python main.py lab1 --seed smoke-seed --mode=init
+python main.py lab6 --seed smoke-seed --mode=dry-run
+```
+
+Ожидаемый результат: команды завершаются без `Traceback`, выводят текст задания или JSON с полем `assignment`.
+
+## Локальный запуск
+
+```bash
+git clone https://github.com/moevm/mse1h2026-lab-gen.git
+cd mse1h2026-lab-gen
+python -m pip install -e ".[test]"
+labgen --help
+```
+
+Старый запуск через `python main.py ...` также поддерживается.
 
 ## Добавление в кафедральный Docker-образ
 
@@ -52,14 +85,13 @@ labgen lab1 --seed Басыров --mode=init
 labgen lab4 --seed Басыров --mode=check --solution=solution.c
 ```
 
-Обычный запуск из репозитория через `python main.py ...` также поддерживается.
-
 ## Примеры команд
 
 Показать параметры конкретной лабораторной:
 
 ```bash
 python main.py lab1 -h
+labgen lab6 -h
 ```
 
 Сгенерировать вариант:
@@ -69,40 +101,61 @@ python main.py lab1 --seed Басыров --mode=init
 python main.py lab2 --seed Басыров --mode=init
 python main.py lab3 --seed Басыров --mode=init
 python main.py lab4 --seed Басыров --mode=init
+python main.py lab5 --seed Басыров --mode=init
+python main.py lab6 --seed Басыров --mode=init
 ```
 
 Вывести задание вместе со сгенерированными тестами:
 
 ```bash
 python main.py lab4 --seed Басыров --mode=dry-run
+python main.py lab6 --seed Басыров --mode=dry-run
 ```
 
 Проверить решение:
 
 ```bash
 python main.py lab1 --seed Басыров --mode=check --solution=./examples/lab1_solution_good.c
+python main.py lab5 --seed test123 --mode=check --solution=./examples/lab5_solution_good.c
+python main.py lab6 --seed test_student --mode=check --solution=./examples/lab6_solution_good.c
+```
+
+Для ЛР2 поддержана проверка текстового blob-файла:
+
+```bash
+python -m prog_labgen.lab2.lab2_cli --blob-file ./examples/lab2_solution_good.txt --seed example-lab2 --mode=check
 ```
 
 ## Тесты
 
-В проекте есть несколько уровней проверок:
+В проекте есть несколько уровней автоматизированных проверок:
 
-- `pytest` - функциональные smoke-тесты CLI и unit-тесты отдельных лабораторных;
-- `scripts/run_example_checks.py` - интеграционная проверка good/bad эталонных решений для ЛР1-ЛР4.
-- `scripts/stress_generate_variants.py` - массовая проверка генерации вариантов на наборе seed-ов.
+- `pytest` - smoke-тесты CLI и unit-тесты отдельных лабораторных;
+- `scripts/run_example_checks.py` - интеграционная проверка good/bad эталонных решений для ЛР1-ЛР6;
+- `scripts/stress_generate_variants.py` - массовая проверка генерации вариантов на наборе seed-ов;
+- GitHub Actions - запуск тестов, интеграционных проверок, stress-проверки и Docker-сценариев на `push` и `pull_request`.
+
+Локальный запуск:
+
+```bash
+python -m pip install -e ".[test]"
+python -m pytest
+python scripts/run_example_checks.py
+python scripts/stress_generate_variants.py --count 25
+```
 
 Запуск внутри Docker-контейнера:
 
 ```bash
 python -m pytest
 python scripts/run_example_checks.py
-python scripts/stress_generate_variants.py --count 25
+python scripts/stress_generate_variants.py --runner labgen --count 25
 ```
 
 Запуск одной командой через Docker без ручного входа в контейнер:
 
 ```bash
-docker run --rm mse-lab-gen -lc "python -m pytest && python scripts/run_example_checks.py && python scripts/stress_generate_variants.py --count 25"
+docker run --rm mse-lab-gen -lc "python -m pytest && python scripts/run_example_checks.py && python scripts/stress_generate_variants.py --runner labgen --count 25"
 ```
 
 ### Stress-проверка генерации
@@ -115,15 +168,15 @@ Stress-проверка нужна, чтобы будущие изменения
 - вывод не пустой;
 - в выводе нет `Traceback`;
 - в выводе нет `None`, `TODO`, `<undefined>`;
-- повторный запуск с тем же seed дает тот же результат.
-- на наборе seed-ов для каждой лабораторной появляется больше одного варианта.
-- если `dry-run` выводит JSON, он должен быть валидным и содержать `assignment`;
-- если в JSON есть `tests`, каждый тест должен содержать входные данные и `expected_stdout`.
+- повторный запуск с тем же seed дает тот же результат;
+- на наборе seed-ов для каждой лабораторной появляется больше одного варианта;
+- если `dry-run` выводит JSON, он валиден и содержит `assignment`;
+- если в JSON есть `tests`, каждый тест содержит входные данные и `expected_stdout`.
 
 Пример запуска:
 
 ```bash
-python scripts/stress_generate_variants.py --labs lab1 lab2 lab3 lab4 --count 100
+python scripts/stress_generate_variants.py --labs lab1 lab2 lab3 lab4 lab5 lab6 --count 100
 ```
 
 При ошибке скрипт печатает команду для воспроизведения:
@@ -147,9 +200,9 @@ python main.py lab3 --seed ci-1842 --mode=dry-run
 - установку проекта как пакета через `pip install -e ".[test]"`;
 - запуск установленной команды `labgen` из директории вне репозитория;
 - обратную совместимость `python main.py ...`;
-- `help` для всех лабораторных через `labgen` и `python main.py`;
+- `help` для ЛР1-ЛР6 через `labgen` и `python main.py`;
 - `pytest`;
-- good/bad эталонные решения;
+- good/bad эталонные решения для ЛР1-ЛР6;
 - малый seed stress;
 - сборку Docker-образа;
 - запуск `labgen`, `python main.py`, `pytest`, good/bad checks и stress внутри Docker.
@@ -162,7 +215,6 @@ python scripts/stress_generate_variants.py --runner labgen --count 1000
 
 Он нужен для поиска редких падений генератора на большом количестве seed-ов и не блокирует каждый pull request.
 
-
 ## Документация
 
 Материалы по итерациям и концепции лабораторных находятся в ветке `reports`:
@@ -172,4 +224,7 @@ python scripts/stress_generate_variants.py --runner labgen --count 1000
 - `docs/lab2_concept.md` - концепция ЛР2;
 - `docs/lab3_concept.md` - концепция ЛР3;
 - `docs/lab4_concept.md` - концепция ЛР4;
-- `docs/iteration_*.pdf` - презентации по итерациям.
+- `docs/lab5_concept.md` - концепция ЛР5;
+- `docs/lab6_concept.md` - концепция ЛР6;
+- `docs/iteration_*.pdf` - презентации по итерациям;
+- `reports.md` - ссылки на материалы по итерациям.
