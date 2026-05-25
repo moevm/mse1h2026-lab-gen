@@ -8,6 +8,7 @@
 - [lab2_concept.md](./lab2_concept.md) - концепция 2 лабораторной работы
 - [lab3_concept.md](./lab3_concept.md) - концепция 3 лабораторной работы
 - [lab4_concept.md](./lab4_concept.md) - концепция 4 лабораторной работы
+- [lab5_concept.md](./lab5_concept.md) - концепция 5 лабораторной работы
 - [iteration_1.pdf](./iteration_1.pdf) - презентация по первой итерации
 - [iteration_2.pdf](./iteration_2.pdf) - презентация по второй итерации
 - [iteration_3.pdf](./iteration_3.pdf) - презентация по третьей итерации
