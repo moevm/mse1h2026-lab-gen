@@ -21,3 +21,15 @@
 - [lab4_concept.md](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/lab4_concept.md) - концепция ЛР4;
 - [iteration_3.pdf](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/iteration_3.pdf) - презентация третьей итерации;
 - [README.md](https://github.com/moevm/mse1h2026-lab-gen/blob/main/README.md) - инструкция по запуску, проверке и тестированию проекта.
+
+## Итерация 4
+
+- [Тестовый курс в Moodle](https://e.moevm.info/course/view.php?id=192) - интеграция ЛР1-ЛР6 в Moodle;
+- [README.md](https://github.com/moevm/mse1h2026-lab-gen/blob/main/README.md) - актуальная инструкция по запуску, проверке, тестированию и пакетной установке проекта;
+- [specification.md](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/specification.md) - постановка задачи, требования и сценарии использования;
+- [lab5_concept.md](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/lab5_concept.md) - концепция ЛР5;
+- [lab6_concept.md](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/lab6_concept.md) - концепция ЛР6;
+- [iteration_4.pdf](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/iteration_4.pdf) - презентация четвертой итерации;
+- [screencast.mp4](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/screencast.mp4) - итоговый скринкаст с демонстрацией работы проекта;
+- [tests.yml](https://github.com/moevm/mse1h2026-lab-gen/blob/main/.github/workflows/tests.yml) - основной CI: pytest, good/bad integration checks, seed stress, Docker checks;
+- [stress.yml](https://github.com/moevm/mse1h2026-lab-gen/blob/main/.github/workflows/stress.yml) - ручной сценарий тестирования, большой stress-прогон генерации вариантов;
