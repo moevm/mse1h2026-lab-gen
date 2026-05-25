@@ -33,3 +33,4 @@
 - [screencast.mp4](https://github.com/moevm/mse1h2026-lab-gen/blob/reports/docs/screencast.mp4) - итоговый скринкаст с демонстрацией работы проекта;
 - [tests.yml](https://github.com/moevm/mse1h2026-lab-gen/blob/main/.github/workflows/tests.yml) - основной CI: pytest, good/bad integration checks, seed stress, Docker checks;
 - [stress.yml](https://github.com/moevm/mse1h2026-lab-gen/blob/main/.github/workflows/stress.yml) - ручной сценарий тестирования, большой stress-прогон генерации вариантов;
+- [customer_sync](https://github.com/moevm/mse1h2026-lab-gen/tree/reports/customer_sync) - созвоны с заказчиком;
