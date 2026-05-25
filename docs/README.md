@@ -3,6 +3,7 @@
 В этой директории собраны документы и презентационные материалы проекта.
 
 - [reports.md](../reports.md) - основной файл с материалами итерации
+- [customer_sync](../customer_sync) - созвоны с заказчиком
 - [specification.md](./specification.md) - спецификация требований
 - [lab1_concept.md](./lab1_concept.md) - концепция 1 лабораторной работы
 - [lab2_concept.md](./lab2_concept.md) - концепция 2 лабораторной работы
