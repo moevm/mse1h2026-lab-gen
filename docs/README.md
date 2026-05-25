@@ -13,5 +13,5 @@
 - [iteration_2.pdf](./iteration_2.pdf) - презентация по второй итерации
 - [iteration_3.pdf](./iteration_3.pdf) - презентация по третьей итерации
 - [iteration_4.pdf](./iteration_4.pdf) - презентация по третьей итерации
-- [screencast.mp4](./screencast_2_iter.mp4) - скринкаст работы проекта после второй итерации
+- [screencast_2.mp4](./screencast_2_iter.mp4) - скринкаст работы проекта после второй итерации
 - [screencast.mp4](./screencast.mp4) - скринкаст работы проекта итоговый
