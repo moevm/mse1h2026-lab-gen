@@ -1,13 +1,13 @@
-FROM python:3.12-slim
+FROM python:3.12-slim-bookworm
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        gcc \
-        g++ \
-        libc6-dev \
-        dpkg-dev \
-        make \
-        vim \
+        gcc=4:12.2.0-3 \
+        g++=4:12.2.0-3 \
+        libc6-dev=2.36-9+deb12u14 \
+        dpkg-dev=1.21.23 \
+        make=4.3-4.1 \
+        vim=2:9.0.1378-2+deb12u2 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
