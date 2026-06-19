@@ -1,4 +1,4 @@
-from .lab1 import Lab1Task, NumberSystem, PositionalNumberSystem, encode_number, get_number_format, make_number_system
+from .lab1 import Lab1Task, NumberSystem, PositionalNumberSystem, make_number_system
 
 
 def test_positional_number_system_uses_common_interface():
