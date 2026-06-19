@@ -6,6 +6,83 @@ from typing import Callable
 from prog_labgen.base_module import BaseTask, rand_int, rand_int_array, rand_sample
 
 
+STANDARD_DIGITS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+
+class NumberSystem:
+    def encode(self, value: int) -> str:
+        raise NotImplementedError
+
+    def get_format(self) -> str:
+        raise NotImplementedError
+
+    def render_description(self) -> list[str]:
+        raise NotImplementedError
+
+
+class PositionalNumberSystem(NumberSystem):
+    def __init__(self, base: int) -> None:
+        if base < 2:
+            raise ValueError("base must be greater than or equal to 2")
+        self.base = base
+
+    def encode(self, value: int) -> str:
+        sign = "-" if value < 0 else ""
+        digits = self._digits(value)
+
+        if self._is_standard():
+            return sign + "".join(STANDARD_DIGITS[digit] for digit in digits)
+
+        return sign + ":".join(str(digit) for digit in digits)
+
+    def get_format(self) -> str:
+        if self._is_standard():
+            return "standard"
+        return "tokenized"
+
+    def render_description(self) -> list[str]:
+        if self._is_standard():
+            return [
+                f"Основание системы счисления: {self.base}.",
+                "Числа во входном массиве и результаты вывода записываются в этой системе счисления.",
+                "Для цифр используются символы 0-9 и A-Z.",
+            ]
+
+        return [
+            f"Основание системы счисления: {self.base}.",
+            "Числа во входном массиве и результаты вывода записываются в этой системе счисления.",
+            "Так как основание больше 36, каждая цифра числа записывается десятичным числом,",
+            "а цифры внутри одного числа разделяются символом ':'.",
+            f"Например, десятичное число {self.base + 5} записывается как 1:5, а -{self.base + 5} как -1:5.",
+        ]
+
+    def _is_standard(self) -> bool:
+        return self.base <= len(STANDARD_DIGITS)
+
+    def _digits(self, value: int) -> list[int]:
+        if value == 0:
+            return [0]
+
+        current = abs(value)
+        digits: list[int] = []
+
+        while current > 0:
+            digits.append(current % self.base)
+            current //= self.base
+
+        digits.reverse()
+        return digits
+
+
+def make_number_system(kind: str, base: int | None = None) -> NumberSystem:
+    if kind == "positional":
+        if base is None:
+            raise ValueError("base is required for positional number system")
+        return PositionalNumberSystem(base)
+
+    raise ValueError(f"unknown number system: {kind}")
+
+
 @dataclass(frozen=True)
 class TaskSpec:
     title: str
@@ -74,6 +151,10 @@ class Lab1Task(BaseTask):
         sep: str = " ",
         k: int = 3,
         tests_per_task: int = 5,
+        random_base: bool = False,
+        base_min: int = 10,
+        base_max: int = 10,
+        number_system_kind: str = "positional",
         fail_on_first_test: bool = True,
         compiler: str | None = None,
     ) -> None:
@@ -82,6 +163,10 @@ class Lab1Task(BaseTask):
         self.sep = sep
         self.k = k
         self.tests_per_task = tests_per_task
+        self.random_base = random_base
+        self.base_min = base_min
+        self.base_max = base_max
+        self.number_system_kind = number_system_kind
         self._variant: dict | None = None
 
     def _build_variant(self) -> dict:
@@ -90,7 +175,14 @@ class Lab1Task(BaseTask):
 
         rnd = self.make_random()
         selected_tasks = rand_sample(rnd, sorted(TASKS.keys()), self.k)
-        params = {"N_max": self.n_max, "K": self.k}
+
+        base = 10
+        if self.random_base:
+            base_rnd = self.make_random("lab1-number-system-base")
+            base = rand_int(base_rnd, self.base_min, self.base_max)
+
+        number_system = make_number_system(self.number_system_kind, base)
+        params = {"N_max": self.n_max, "K": self.k, "BASE": base}
 
         for task_id in selected_tasks:
             for param_name in TASKS[task_id].params:
@@ -108,21 +200,38 @@ class Lab1Task(BaseTask):
             "seed_hash": self.make_seed_hash(),
             "tasks": selected_tasks,
             "params": params,
+            "number_system": {
+                "kind": self.number_system_kind,
+                "base": base,
+                "format": number_system.get_format(),
+                "random_base": self.random_base,
+            },
         }
         return self._variant
 
     def _make_random_array(self, salt: str) -> list[int]:
         rnd = self.make_random(salt)
+        base = self._build_variant()["number_system"]["base"]
+        value_limit = 25
+
+        if self.random_base:
+            value_limit = max(value_limit, base * 2)
+
         return rand_int_array(
             rnd,
             size_min=max(1, int(self.n_max * 0.1)),
             size_max=self.n_max,
-            value_min=-25,
-            value_max=25,
+            value_min=-value_limit,
+            value_max=value_limit,
         )
 
+    def _format_number(self, value: int) -> str:
+        number_info = self._build_variant()["number_system"]
+        number_system = make_number_system(number_info["kind"], number_info["base"])
+        return number_system.encode(value)
+
     def _format_stdin(self, arr: list[int]) -> str:
-        return self.sep.join(str(value) for value in arr) + "\n"
+        return self.sep.join(self._format_number(value) for value in arr) + "\n"
 
     def render_assignment(self) -> str:
         variant = self._build_variant()
@@ -132,6 +241,10 @@ class Lab1Task(BaseTask):
             f"Seed hash: {variant['seed_hash']}",
             f"Nmax: {variant['params']['N_max']}",
             f"Кол-во подзадач: {variant['params']['K']}",
+            *make_number_system(
+                variant["number_system"]["kind"],
+                variant["number_system"]["base"],
+            ).render_description(),
             "   Реализуйте программу, которая должна считать массив целых чисел и",
             "напечатать результаты выполнения назначенных подзадач по одному в строке.",
             "   Назначенные подзадачи:",
@@ -159,11 +272,13 @@ class Lab1Task(BaseTask):
             for task_id in variant["tasks"]:
                 task = TASKS[task_id]
                 args = [arr] + [variant["params"][param] for param in task.params]
-                expected_lines.append(str(task.func(*args)))
+                expected_lines.append(self._format_number(task.func(*args)))
 
             tests.append(
                 {
                     "input_array": arr,
+                    "number_base": variant["number_system"]["base"],
+                    "number_format": variant["number_system"]["format"],
                     "stdin": self._format_stdin(arr),
                     "expected_stdout": "\n".join(expected_lines) + "\n",
                 }

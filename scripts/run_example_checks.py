@@ -21,6 +21,7 @@ class ExampleCase:
     solution_path: Path
     expected_pass: bool
     command_kind: str = "main"
+    extra_args: tuple[str, ...] = ()
 
 
 CASES: tuple[ExampleCase, ...] = (
@@ -37,6 +38,14 @@ CASES: tuple[ExampleCase, ...] = (
         seed="Басыров",
         solution_path=ROOT / "examples" / "lab1_solution_bad.c",
         expected_pass=False,
+    ),
+    ExampleCase(
+        label="lab1 base 234 good",
+        lab="lab1",
+        seed="Басыров",
+        solution_path=ROOT / "examples" / "lab1_solution_base_good.c",
+        expected_pass=True,
+        extra_args=("--random-base", "--base-min", "234", "--base-max", "234"),
     ),
     ExampleCase(
         label="lab2 good",
@@ -140,6 +149,7 @@ def build_command(case: ExampleCase) -> list[str]:
     ]
     if ARGS.cc is not None:
         command.extend(["--cc", ARGS.cc])
+    command.extend(case.extra_args)
     return command
 
 
