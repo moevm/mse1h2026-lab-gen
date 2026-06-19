@@ -11,16 +11,16 @@ def test_positional_number_system_uses_common_interface():
 
 
 def test_encode_standard_numbers():
-    assert encode_number(0, 16) == "0"
-    assert encode_number(255, 16) == "FF"
-    assert encode_number(-31, 16) == "-1F"
-    assert encode_number(35, 36) == "Z"
+    assert make_number_system("positional", 16).encode(0) == "0"
+    assert make_number_system("positional", 16).encode(255) == "FF"
+    assert make_number_system("positional", 16).encode(-31) == "-1F"
+    assert make_number_system("positional", 36).encode(35) == "Z"
 
 
 def test_encode_tokenized_numbers():
-    assert encode_number(38, 37) == "1:1"
-    assert encode_number(500, 234) == "2:32"
-    assert encode_number(-500, 234) == "-2:32"
+    assert make_number_system("positional", 37).encode(38) == "1:1"
+    assert make_number_system("positional", 234).encode(500) == "2:32"
+    assert make_number_system("positional", 234).encode(-500) == "-2:32"
 
 
 def test_random_base_is_deterministic():
@@ -34,10 +34,11 @@ def test_random_base_is_deterministic():
 def test_standard_format_for_base_16():
     task = Lab1Task("student", random_base=True, base_min=16, base_max=16)
     test = task.generate_tests()[0]
+    number_system = make_number_system("positional", 16)
 
     assert test["number_base"] == 16
     assert test["number_format"] == "standard"
-    assert test["stdin"] == " ".join(encode_number(value, 16) for value in test["input_array"]) + "\n"
+    assert test["stdin"] == " ".join(number_system.encode(value) for value in test["input_array"]) + "\n"
 
 
 def test_tokenized_format_for_base_234():
@@ -51,7 +52,8 @@ def test_tokenized_format_for_base_234():
 def test_default_lab1_stays_decimal():
     task = Lab1Task("student")
     test = task.generate_tests()[0]
+    number_system = make_number_system("positional", 10)
 
     assert task._build_variant()["number_system"]["base"] == 10
-    assert get_number_format(10) == "standard"
+    assert number_system.get_format() == "standard"
     assert test["stdin"] == " ".join(str(value) for value in test["input_array"]) + "\n"
