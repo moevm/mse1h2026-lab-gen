@@ -120,6 +120,12 @@ python main.py lab5 --seed test123 --mode=check --solution=./examples/lab5_solut
 python main.py lab6 --seed test_student --mode=check --solution=./examples/lab6_solution_good.c
 ```
 
+Для ЛР1 поддержана опция случайного выбора основания системы счисления для чисел на входе и выходе (от 10 до 234):
+
+```bash
+python main.py lab1 --seed Басыров --mode=init --random-base --base-min 10 --base-max 234
+```
+
 Для ЛР2 поддержана проверка текстового blob-файла:
 
 ```bash
