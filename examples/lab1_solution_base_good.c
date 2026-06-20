@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #define BASE 234
+#define TOKEN_SIZE 256
 
 int parse_number(const char *text) {
     int sign = 1;
@@ -34,6 +35,9 @@ int parse_number(const char *text) {
 
         if (text[index] == ':') {
             index++;
+            if (text[index] == '\0') {
+                exit(1);
+            }
         } else if (text[index] != '\0') {
             exit(1);
         }
@@ -67,6 +71,7 @@ void print_number(int value) {
             putchar(':');
         }
     }
+
     putchar('\n');
 }
 
@@ -79,7 +84,7 @@ int main(void) {
     int *arr = NULL;
     int size = 0;
     int capacity = 16;
-    char token[256];
+    char token[TOKEN_SIZE];
 
     arr = (int *)malloc((size_t)capacity * sizeof(int));
     if (arr == NULL) {
@@ -96,6 +101,7 @@ int main(void) {
             }
             arr = new_arr;
         }
+
         arr[size++] = parse_number(token);
     }
 
