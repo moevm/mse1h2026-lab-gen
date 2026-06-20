@@ -16,6 +16,8 @@ def create_lab1_task(args: argparse.Namespace, parser: argparse.ArgumentParser) 
         parser.error(f"--k must be less than or equal to {len(TASKS)} for lab1.")
     if args.base_min > args.base_max:
         parser.error("--base-min must be less than or equal to --base-max for lab1.")
+    if args.random_base and args.n_max < 6:
+        parser.error("--n-max must be at least 6 for lab1 random-base mode.")
 
     common_args = get_common_cli_args(args)
     return Lab1Task(
