@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define BASE 64
+#define BASE 234
 #define TOKEN_SIZE 256
 
 int parse_number(const char *text) {
@@ -76,17 +76,17 @@ void print_number(int value) {
 }
 
 int main(void) {
-    const int M = 7;
-    const int A = 19;
-    const int B = 95;
-    const int L = 8;
+    const int M = 9;
+    const int P = 8;
+    const int K = 5;
+    const int L = 2;
 
     int *arr = NULL;
     int size = 0;
     int capacity = 16;
     char token[TOKEN_SIZE];
 
-    arr = malloc((size_t)capacity * sizeof(int));
+    arr = (int *)malloc((size_t)capacity * sizeof(int));
     if (arr == NULL) {
         return 1;
     }
@@ -94,7 +94,7 @@ int main(void) {
     while (scanf("%255s", token) == 1) {
         if (size >= capacity) {
             capacity *= 2;
-            int *new_arr = realloc(arr, (size_t)capacity * sizeof(int));
+            int *new_arr = (int *)realloc(arr, (size_t)capacity * sizeof(int));
             if (new_arr == NULL) {
                 free(arr);
                 return 1;
@@ -115,10 +115,8 @@ int main(void) {
     print_number(result1);
 
     int result2 = 0;
-    for (int i = 0; i < size; i++) {
-        if (arr[i] >= A && arr[i] <= B) {
-            result2++;
-        }
+    for (int i = P; i < size; i += K) {
+        result2 += abs(arr[i]);
     }
     print_number(result2);
 
