@@ -8,6 +8,9 @@ from prog_labgen.base_module import BaseTask, rand_int, rand_int_array, rand_sam
 
 STANDARD_DIGITS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 LEADING_ZERO_WIDTH = 4
+IMPLEMENTED_NUMBER_SYSTEMS = {
+    "positional",
+}
 
 class NumberSystem:
     def encode(self, value: int) -> str:
@@ -93,12 +96,39 @@ class PositionalNumberSystem(NumberSystem):
         digits.reverse()
         return digits
 
+class PlaceholderNumberSystem(NumberSystem):
+    def __init__(self, kind: str) -> None:
+        self.kind = kind
 
-def make_number_system(kind: str, base: int | None = None) -> NumberSystem:
+    def encode(self, value: int) -> str:
+        raise NotImplementedError(
+            f"Number system '{self.kind}' is not implemented yet."
+        )
+
+    def get_format(self) -> str:
+        return self.kind
+
+    def render_description(self) -> list[str]:
+        return [
+            f"Система представления чисел: {self.kind}.",
+            "Данная система пока не реализована.",
+        ]
+
+def make_number_system(kind: str, base: int | str | None = None) -> NumberSystem:
     if kind == "positional":
         if base is None:
             raise ValueError("base is required for positional number system")
+
+        if isinstance(base, str):
+            if base.isdigit():
+                base = int(base)
+            else:
+                return PlaceholderNumberSystem(base)
+
         return PositionalNumberSystem(base)
+
+    if kind in {"roman", "fib", "fact"}:
+        return PlaceholderNumberSystem(kind)
 
     raise ValueError(f"unknown number system: {kind}")
 
@@ -172,6 +202,7 @@ class Lab1Task(BaseTask):
         k: int = 3,
         tests_per_task: int = 5,
         random_base: bool = False,
+        random_base_list: list[str] = None,
         base_min: int = 10,
         base_max: int = 10,
         number_system_kind: str = "positional",
@@ -187,6 +218,7 @@ class Lab1Task(BaseTask):
         self.k = k
         self.tests_per_task = tests_per_task
         self.random_base = random_base
+        self.random_base_list = random_base_list
         self.base_min = base_min
         self.base_max = base_max
         self.number_system_kind = number_system_kind
@@ -200,11 +232,25 @@ class Lab1Task(BaseTask):
         selected_tasks = rand_sample(rnd, sorted(TASKS.keys()), self.k)
 
         base = 10
+        number_system_kind = self.number_system_kind
+
         if self.random_base:
             base_rnd = self.make_random("lab1-number-system-base")
-            base = rand_int(base_rnd, self.base_min, self.base_max)
 
-        number_system = make_number_system(self.number_system_kind, base)
+            if self.random_base_list:
+                selected = base_rnd.choice(self.random_base_list)
+
+                if selected.isdigit():
+                    base = int(selected)
+                    number_system_kind = "positional"
+                else:
+                    number_system_kind = selected
+                    base = None
+            else:
+                base = rand_int(base_rnd, self.base_min, self.base_max)
+
+        number_system = make_number_system(number_system_kind, base)
+
         params = {"N_max": self.n_max, "K": self.k, "BASE": base}
 
         for task_id in selected_tasks:
@@ -224,7 +270,7 @@ class Lab1Task(BaseTask):
             "tasks": selected_tasks,
             "params": params,
             "number_system": {
-                "kind": self.number_system_kind,
+                "kind": number_system_kind,
                 "base": base,
                 "format": number_system.get_format(),
                 "random_base": self.random_base,
@@ -298,6 +344,21 @@ class Lab1Task(BaseTask):
 
     def render_assignment(self) -> str:
         variant = self._build_variant()
+        if variant["number_system"]["kind"] not in IMPLEMENTED_NUMBER_SYSTEMS:
+            number_system = make_number_system(
+                variant["number_system"]["kind"],
+                variant["number_system"]["base"],
+            )
+            return "\n".join(
+                [
+                    "Концепция варианта ЛР1",
+                    f"Seed: {variant['seed']}",
+                    f"Seed hash: {variant['seed_hash']}",
+                    f"Nmax: {variant['params']['N_max']}",
+                    f"Кол-во подзадач: {variant['params']['K']}",
+                    *number_system.render_description(),
+                ]
+            )
         lines = [
             "Концепция варианта ЛР1",
             f"Seed: {variant['seed']}",
@@ -335,6 +396,10 @@ class Lab1Task(BaseTask):
 
     def generate_tests(self) -> list[dict]:
         variant = self._build_variant()
+        if variant["number_system"]["kind"] not in IMPLEMENTED_NUMBER_SYSTEMS:
+            raise NotImplementedError(
+                f"Number system '{variant['number_system']['kind']}' is not implemented yet."
+            )
         tests = []
 
         for test_index in range(1, self.tests_per_task + 1):

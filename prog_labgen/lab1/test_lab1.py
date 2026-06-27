@@ -1,5 +1,7 @@
 from .lab1 import Lab1Task, NumberSystem, PositionalNumberSystem, make_number_system
-
+import pytest
+import argparse
+from .lab1_cli import create_lab1_task
 
 def test_positional_number_system_uses_common_interface():
     number_system = make_number_system("positional", 16)
@@ -151,3 +153,76 @@ def test_default_lab1_stays_decimal():
     assert "leading_zeros_input" in test
     assert test["leading_zeros_input"] is False
     assert test["stdin"] == " ".join(str(value) for value in test["input_array"]) + "\n"
+
+def test_random_base_list_selects_positional_system():
+    task = Lab1Task(
+        "student",
+        random_base=True,
+        random_base_list=["16"],
+    )
+
+    info = task._build_variant()["number_system"]
+
+    assert info["kind"] == "positional"
+    assert info["base"] == 16
+
+
+def test_random_base_list_selects_placeholder_system():
+    task = Lab1Task(
+        "student",
+        random_base=True,
+        random_base_list=["roman"],
+    )
+
+    info = task._build_variant()["number_system"]
+
+    assert info["kind"] == "roman"
+    assert info["base"] is None
+
+
+def test_render_assignment_for_placeholder_system():
+    task = Lab1Task(
+        "student",
+        random_base=True,
+        random_base_list=["roman"],
+    )
+
+    assignment = task.render_assignment()
+
+    assert "roman" in assignment
+    assert "не реализована" in assignment
+
+
+def test_generate_tests_for_placeholder_system():
+    task = Lab1Task(
+        "student",
+        random_base=True,
+        random_base_list=["roman"],
+    )
+
+    with pytest.raises(NotImplementedError):
+        task.generate_tests()
+
+
+def test_unknown_number_system():
+    with pytest.raises(ValueError):
+        make_number_system("unknown")
+
+
+def test_positional_number_system_requires_base():
+    with pytest.raises(ValueError):
+        make_number_system("positional")
+
+
+def test_invalid_positional_base():
+    with pytest.raises(ValueError):
+        PositionalNumberSystem(1)
+
+
+def test_random_base_requires_nmax_at_least_6():
+    with pytest.raises(ValueError):
+        Lab1Task(
+            "student",
+            random_base=True,
+            n_max=5,
+        )
